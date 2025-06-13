@@ -1,0 +1,279 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+import { useUsersFilter } from "@/hooks/use-users-filter";
+import { PermissionGate } from "@/components/rbac/permission-gate";
+import { Permission } from "@/types/permission-types";
+import type { UserData } from "@/types/user-types";
+
+export function UsersTable() {
+	const [users, setUsers] = useState<UserData[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [page, setPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
+	const [totalUsers, setTotalUsers] = useState(0);
+	const itemsPerPage = 5;
+
+	const { searchQuery, statusFilter, selectedRoles } = useUsersFilter();
+	const { toast } = useToast();
+
+	useEffect(() => {
+		const fetchUsers = async () => {
+			setLoading(true);
+			setError(null);
+
+			try {
+				// Build query parameters
+				const params = new URLSearchParams({
+					page: page.toString(),
+					limit: itemsPerPage.toString(),
+				});
+
+				if (searchQuery) {
+					params.append("search", searchQuery);
+				}
+
+				if (statusFilter !== "all") {
+					params.append("status", statusFilter);
+				}
+
+				if (selectedRoles.length > 0) {
+					params.append("roles", selectedRoles.join(","));
+				}
+
+				const response = await fetch(
+					`/api/protected/users?${params.toString()}`
+				);
+
+				if (!response.ok) {
+					throw new Error(`Error fetching users: ${response.statusText}`);
+				}
+
+				const result = await response.json();
+				setUsers(result.data);
+				setTotalPages(result.meta.totalPages);
+				setTotalUsers(result.meta.total);
+			} catch (err) {
+				setError(
+					err instanceof Error
+						? err.message
+						: "An error occurred while fetching users"
+				);
+				toast({
+					variant: "destructive",
+					title: "Error",
+					description:
+						err instanceof Error ? err.message : "Failed to load users",
+				});
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchUsers();
+	}, [page, searchQuery, statusFilter, selectedRoles, toast]);
+
+	function formatDate(dateString: string) {
+		return new Date(dateString).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
+	}
+
+	function getStatusColor(status: string) {
+		switch (status) {
+			case "active":
+				return "bg-green-500/20 text-green-500 hover:bg-green-500/30";
+			case "inactive":
+				return "bg-red-500/20 text-red-500 hover:bg-red-500/30";
+			case "pending":
+				return "bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30";
+			default:
+				return "bg-gray-500/20 text-gray-500 hover:bg-gray-500/30";
+		}
+	}
+
+	return (
+		<div className="flex flex-col space-y-4 bg-card rounded-lg border border-border">
+			<div className="rounded-md">
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>User</TableHead>
+							<TableHead>Role</TableHead>
+							<TableHead>Status</TableHead>
+							<TableHead>Last Active</TableHead>
+							<TableHead className="w-[80px]"></TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{loading ? (
+							// Loading state
+							Array.from({ length: itemsPerPage }).map((_, index) => (
+								<TableRow key={`loading-${index}`}>
+									<TableCell>
+										<div className="flex items-center space-x-3">
+											<div className="h-8 w-8 rounded-full bg-muted animate-pulse"></div>
+											<div className="space-y-2">
+												<div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
+												<div className="h-3 w-32 bg-muted animate-pulse rounded"></div>
+											</div>
+										</div>
+									</TableCell>
+									<TableCell>
+										<div className="h-4 w-16 bg-muted animate-pulse rounded"></div>
+									</TableCell>
+									<TableCell>
+										<div className="h-5 w-16 bg-muted animate-pulse rounded-full"></div>
+									</TableCell>
+									<TableCell>
+										<div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
+									</TableCell>
+									<TableCell>
+										<div className="h-8 w-8 bg-muted animate-pulse rounded"></div>
+									</TableCell>
+								</TableRow>
+							))
+						) : error ? (
+							// Error state
+							<TableRow>
+								<TableCell
+									colSpan={5}
+									className="text-center py-8 text-destructive"
+								>
+									{error}
+								</TableCell>
+							</TableRow>
+						) : users.length > 0 ? (
+							// Data state
+							users.map((user) => (
+								<TableRow key={user.id}>
+									<TableCell>
+										<div className="flex items-center space-x-3">
+											<Avatar className="h-8 w-8">
+												<AvatarImage src="/placeholder.svg" alt={user.name} />
+												<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+											</Avatar>
+											<div>
+												<div className="font-medium">{user.name}</div>
+												<div className="text-sm text-muted-foreground">
+													{user.email}
+												</div>
+											</div>
+										</div>
+									</TableCell>
+									<TableCell>
+										<div className="capitalize">{user.role}</div>
+									</TableCell>
+									<TableCell>
+										<Badge
+											variant="outline"
+											className={getStatusColor(user.status)}
+										>
+											{user.status}
+										</Badge>
+									</TableCell>
+									<TableCell>{formatDate(user.lastActive)}</TableCell>
+									<TableCell>
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button variant="ghost" size="icon">
+													<MoreHorizontal className="h-4 w-4" />
+													<span className="sr-only">Open menu</span>
+												</Button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent align="end">
+												<DropdownMenuLabel>Actions</DropdownMenuLabel>
+												<DropdownMenuSeparator />
+
+												<PermissionGate permissions={[Permission.ViewUsers]}>
+													<DropdownMenuItem>
+														<Eye className="mr-2 h-4 w-4" />
+														View details
+													</DropdownMenuItem>
+												</PermissionGate>
+
+												<PermissionGate permissions={[Permission.UpdateUsers]}>
+													<DropdownMenuItem>
+														<Edit className="mr-2 h-4 w-4" />
+														Edit user
+													</DropdownMenuItem>
+												</PermissionGate>
+
+												<PermissionGate permissions={[Permission.DeleteUsers]}>
+													<DropdownMenuSeparator />
+													<DropdownMenuItem className="text-destructive">
+														<Trash2 className="mr-2 h-4 w-4" />
+														Delete user
+													</DropdownMenuItem>
+												</PermissionGate>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</TableCell>
+								</TableRow>
+							))
+						) : (
+							// Empty state
+							<TableRow>
+								<TableCell colSpan={5} className="text-center py-8">
+									No users found
+								</TableCell>
+							</TableRow>
+						)}
+					</TableBody>
+				</Table>
+			</div>
+
+			{!loading && !error && users.length > 0 && (
+				<div className="flex items-center justify-between px-4 py-2">
+					<div className="text-sm text-muted-foreground">
+						Showing {Math.min(totalUsers, (page - 1) * itemsPerPage + 1)} to{" "}
+						{Math.min(totalUsers, page * itemsPerPage)} of {totalUsers} users
+					</div>
+					<div className="flex items-center space-x-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => setPage(page - 1)}
+							disabled={page === 1}
+						>
+							Previous
+						</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => setPage(page + 1)}
+							disabled={page === totalPages}
+						>
+							Next
+						</Button>
+					</div>
+				</div>
+			)}
+		</div>
+	);
+}
