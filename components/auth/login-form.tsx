@@ -68,19 +68,25 @@ export function LoginForm() {
 
 			if (signInError) throw new Error(signInError.message);
 
-			// Step 2: Check if user is an admin
-			const { data: adminData, error: adminError } = await supabase
-				.from("admins")
+			// Step 2: get user role and ID
+			const { data: userData, error: userError } = await supabase
+				.from("users")
 				.select("*")
 				.eq("supabase_id", signInData.user?.id)
 				.single();
 
-			if (adminError || !adminData) {
+			if (userError) throw new Error(userError.message);
+
+			// Step 3: check if user is an admin or a superuser
+			if (
+				userData.user_type !== "admin" &&
+				userData.user_type !== "superuser"
+			) {
 				await supabase.auth.signOut();
 				throw new Error("You are not authorized to access this dashboard");
 			}
 
-			// Step 3: Send OTP to email
+			// Step 4: Send OTP to email
 			const { error: otpError } = await supabase.auth.signInWithOtp({
 				email: values.email,
 				options: {
