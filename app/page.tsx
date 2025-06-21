@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
-	const cookieStore = cookies();
-	const supabase = createClient(cookieStore);
+	const supabase = await createClient();
 
 	const {
 		data: { session },

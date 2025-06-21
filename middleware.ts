@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { type Permission, Role } from "@/types/permission-types";
 import {
 	ROUTE_PERMISSIONS,
@@ -13,8 +13,49 @@ const PUBLIC_ROUTES = ["/login", "/api/public"];
 const API_ROUTES = ["/api/"];
 
 export async function middleware(request: NextRequest) {
-	const response = NextResponse.next();
-	const supabase = createMiddlewareClient({ req: request, res: response });
+	let supabaseResponse = NextResponse.next({
+		request,
+	});
+
+	const supabase = createServerClient(
+		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+		{
+			cookies: {
+				get(name: string) {
+					return request.cookies.get(name)?.value;
+				},
+				set(name: string, value: string, options: { path?: string }) {
+					const cookieOptions = {
+						name,
+						value,
+						...options,
+					};
+					request.cookies.set(cookieOptions);
+					supabaseResponse = NextResponse.next({
+						request: {
+							headers: request.headers,
+						},
+					});
+					supabaseResponse.cookies.set(cookieOptions);
+				},
+				remove(name: string, options: { path?: string }) {
+					const cookieOptions = {
+						name,
+						value: "",
+						...options,
+					};
+					request.cookies.set(cookieOptions);
+					supabaseResponse = NextResponse.next({
+						request: {
+							headers: request.headers,
+						},
+					});
+					supabaseResponse.cookies.set(cookieOptions);
+				},
+			},
+		}
+	);
 
 	// Check if the session exists
 	const {
@@ -41,7 +82,7 @@ export async function middleware(request: NextRequest) {
 			return NextResponse.redirect(redirectUrl);
 		}
 
-		return response;
+		return supabaseResponse;
 	}
 
 	// User is authenticated, fetch their roles
@@ -58,88 +99,93 @@ export async function middleware(request: NextRequest) {
 		)
 		.eq("user_id", session.user.id);
 
+	let userRoleNames: Role[] = [];
+
 	if (rolesError) {
 		console.error("Error fetching user roles:", rolesError);
 		// Default to no roles if there's an error
-		const userRoleNames: Role[] = [];
+		userRoleNames = [];
 	} else {
 		// Extract role names
-		const userRoleNames = userRoles?.map((ur) => ur.roles.name as Role) || [];
+		userRoleNames = userRoles?.map((ur: any) => ur.roles.name as Role) || [];
 
 		// If no roles assigned, default to guest
 		if (userRoleNames.length === 0) {
 			userRoleNames.push(Role.Guest);
 		}
+	}
 
-		// Handle API routes - add auth headers
-		if (requestPath.startsWith("/api/")) {
-			// Add auth headers to API requests
-			response.headers.set("x-user-id", session.user.id);
-			response.headers.set("x-user-email", session.user.email || "");
-			response.headers.set("x-user-roles", JSON.stringify(userRoleNames));
-			response.headers.set("Authorization", `Bearer ${session.access_token}`);
+	// Handle API routes - add auth headers
+	if (requestPath.startsWith("/api/")) {
+		// Add auth headers to API requests
+		supabaseResponse.headers.set("x-user-id", session.user.id);
+		supabaseResponse.headers.set("x-user-email", session.user.email || "");
+		supabaseResponse.headers.set("x-user-roles", JSON.stringify(userRoleNames));
+		supabaseResponse.headers.set(
+			"Authorization",
+			`Bearer ${session.access_token}`
+		);
 
-			// For protected API routes, check permissions
-			if (isProtectedRoute(requestPath)) {
-				const apiKey = `${requestMethod} ${requestPath}`;
+		// For protected API routes, check permissions
+		if (isProtectedRoute(requestPath)) {
+			const apiKey = `${requestMethod} ${requestPath}`;
 
-				// Find matching API permission configuration
-				const matchingApiRoutes = Object.keys(API_PERMISSIONS)
-					.filter((pattern) => {
-						const [patternMethod, patternPath] = pattern.split(" ");
-						return (
-							patternMethod === requestMethod &&
-							requestPath.startsWith(patternPath)
-						);
-					})
-					.sort((a, b) => {
-						const pathA = a.split(" ")[1];
-						const pathB = b.split(" ")[1];
-						return pathB.length - pathA.length; // Sort by specificity (longest path first)
-					});
-
-				if (matchingApiRoutes.length > 0) {
-					const requiredPermissions = API_PERMISSIONS[matchingApiRoutes[0]];
-
-					// Check if user has any of the required permissions based on their roles
-					const hasPermission = await checkUserPermissions(
-						supabase,
-						session.user.id,
-						requiredPermissions
+			// Find matching API permission configuration
+			const matchingApiRoutes = Object.keys(API_PERMISSIONS)
+				.filter((pattern) => {
+					const [patternMethod, patternPath] = pattern.split(" ");
+					return (
+						patternMethod === requestMethod &&
+						requestPath.startsWith(patternPath)
 					);
+				})
+				.sort((a, b) => {
+					const pathA = a.split(" ")[1];
+					const pathB = b.split(" ")[1];
+					return pathB.length - pathA.length; // Sort by specificity (longest path first)
+				});
 
-					if (!hasPermission) {
-						return NextResponse.json(
-							{ error: "Insufficient permissions" },
-							{ status: 403 }
-						);
-					}
+			if (matchingApiRoutes.length > 0) {
+				const requiredPermissions = API_PERMISSIONS[matchingApiRoutes[0]];
+
+				// Check if user has any of the required permissions based on their roles
+				const hasPermission = await checkUserPermissions(
+					supabase,
+					session.user.id,
+					requiredPermissions
+				);
+
+				if (!hasPermission) {
+					return NextResponse.json(
+						{ error: "Insufficient permissions" },
+						{ status: 403 }
+					);
 				}
 			}
-
-			return response;
 		}
 
-		// For non-API routes, check route permissions
-		const matchingRoutes = Object.keys(ROUTE_PERMISSIONS)
-			.filter((pattern) => requestPath.startsWith(pattern))
-			.sort((a, b) => b.length - a.length); // Sort by specificity (longest first)
+		return supabaseResponse;
+	}
 
-		if (matchingRoutes.length > 0) {
-			const requiredPermissions = ROUTE_PERMISSIONS[matchingRoutes[0]];
+	// For non-API routes, check route permissions
+	const matchingRoutes = Object.keys(ROUTE_PERMISSIONS)
+		.filter((pattern) => requestPath.startsWith(pattern))
+		.sort((a, b) => b.length - a.length); // Sort by specificity (longest first)
 
-			// Check if user has any of the required permissions
-			const hasPermission = await checkUserPermissions(
-				supabase,
-				session.user.id,
-				requiredPermissions
+	if (matchingRoutes.length > 0) {
+		const requiredPermissions = ROUTE_PERMISSIONS[matchingRoutes[0]];
+
+		// Check if user has any of the required permissions
+		const hasPermission = await checkUserPermissions(
+			supabase,
+			session.user.id,
+			requiredPermissions
+		);
+
+		if (!hasPermission) {
+			return NextResponse.redirect(
+				new URL("/dashboard/unauthorized", request.url)
 			);
-
-			if (!hasPermission) {
-				return NextResponse.redirect(
-					new URL("/dashboard/unauthorized", request.url)
-				);
-			}
 		}
 	}
 
@@ -148,7 +194,7 @@ export async function middleware(request: NextRequest) {
 		return NextResponse.redirect(new URL("/dashboard/users", request.url));
 	}
 
-	return response;
+	return supabaseResponse;
 }
 
 // Helper function to check if a user has any of the required permissions
@@ -174,7 +220,7 @@ async function checkUserPermissions(
 		if (rolesError) throw rolesError;
 
 		// Extract role names
-		const roleNames = userRoles?.map((ur) => ur.roles.name as Role) || [];
+		const roleNames = userRoles?.map((ur: any) => ur.roles.name as Role) || [];
 
 		// If no roles, default to guest
 		if (roleNames.length === 0) {
@@ -193,14 +239,15 @@ async function checkUserPermissions(
 			)
 			.in(
 				"role_id",
-				userRoles.map((ur) => ur.roles.id)
+				userRoles.map((ur: any) => ur.roles.id)
 			);
 
 		if (permissionsError) throw permissionsError;
 
 		// Extract permission names
 		const permissionNames =
-			rolePermissions?.map((rp) => rp.permissions.name as Permission) || [];
+			rolePermissions?.map((rp: any) => rp.permissions.name as Permission) ||
+			[];
 
 		// Check if user has any of the required permissions
 		return requiredPermissions.some((permission) =>

@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session, User, AuthChangeEvent } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
 import { setupTokenRefresh } from "@/lib/auth/token-refresh";
@@ -65,7 +65,11 @@ export function UserProvider({
 			if (rolesError) throw rolesError;
 
 			// Extract role names
-			const roles = userRoles?.map((ur) => ur.roles.name as Role) || [];
+			const roles =
+				userRoles?.map(
+					(ur: { role_id: string; roles: { id: string; name: string } }) =>
+						ur.roles.name as Role
+				) || [];
 
 			// If no roles assigned, default to guest
 			if (roles.length === 0) {
@@ -100,18 +104,20 @@ export function UserProvider({
 		// Set up auth state change listener
 		const {
 			data: { subscription },
-		} = supabase.auth.onAuthStateChange(async (_event, session) => {
-			setUser(session?.user || null);
-			setSession(session);
+		} = supabase.auth.onAuthStateChange(
+			async (_event: AuthChangeEvent, session: Session | null) => {
+				setUser(session?.user || null);
+				setSession(session);
 
-			if (session?.user) {
-				await fetchUserRolesAndPermissions(session.user.id);
-			} else {
-				setRbacUser(null);
+				if (session?.user) {
+					await fetchUserRolesAndPermissions(session.user.id);
+				} else {
+					setRbacUser(null);
+				}
+
+				setIsLoading(false);
 			}
-
-			setIsLoading(false);
-		});
+		);
 
 		// Set up token refresh
 		const cleanupTokenRefresh = setupTokenRefresh();

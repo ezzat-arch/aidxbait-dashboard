@@ -1,6 +1,5 @@
 import type React from "react";
 import { Inter } from "next/font/google";
-import { cookies } from "next/headers";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,8 +20,7 @@ export default async function RootLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const cookieStore = cookies();
-	const supabase = createClient(cookieStore);
+	const supabase = await createClient();
 
 	const {
 		data: { session },

@@ -1,5 +1,4 @@
 import type React from "react";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
@@ -10,8 +9,7 @@ export default async function DashboardLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const cookieStore = cookies();
-	const supabase = createClient(cookieStore);
+	const supabase = await createClient();
 
 	const {
 		data: { session },

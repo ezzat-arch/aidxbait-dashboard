@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 
@@ -6,8 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "@/components/auth/login-form";
 
 export default async function LoginPage() {
-	const cookieStore = cookies();
-	const supabase = createClient(cookieStore);
+	const supabase = await createClient();
 
 	const {
 		data: { session },

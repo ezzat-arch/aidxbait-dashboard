@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 
@@ -8,8 +7,7 @@ import { Permission } from "@/types/permission-types";
 export const GET = withPermission(
 	[Permission.ViewUsers],
 	async (req: NextRequest, context, user) => {
-		const cookieStore = cookies();
-		const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+		const supabase = await createClient();
 
 		// Get query parameters
 		const { searchParams } = new URL(req.url);
@@ -65,8 +63,7 @@ export const GET = withPermission(
 export const POST = withPermission(
 	[Permission.CreateUsers],
 	async (req: NextRequest, context, user) => {
-		const cookieStore = cookies();
-		const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+		const supabase = await createClient();
 
 		try {
 			const userData = await req.json();
@@ -115,8 +112,7 @@ export const POST = withPermission(
 export const DELETE = withPermission(
 	[Permission.DeleteUsers],
 	async (req: NextRequest, context, user) => {
-		const cookieStore = cookies();
-		const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+		const supabase = await createClient();
 
 		try {
 			const { searchParams } = new URL(req.url);

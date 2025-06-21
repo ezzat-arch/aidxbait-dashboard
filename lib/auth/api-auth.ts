@@ -1,5 +1,4 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { Permission } from "@/types/permission-types";
@@ -20,8 +19,7 @@ export function withAuth(handler: AuthenticatedHandler) {
 		req: NextRequest,
 		context: { params: Record<string, string> }
 	) => {
-		const cookieStore = cookies();
-		const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+		const supabase = await createClient();
 
 		const {
 			data: { session },
@@ -54,7 +52,8 @@ export function withAuth(handler: AuthenticatedHandler) {
 			.select(
 				`
         roles (
-          name
+          name,
+          id
         )
       `
 			)
@@ -68,8 +67,9 @@ export function withAuth(handler: AuthenticatedHandler) {
 			);
 		}
 
-		// Extract role names
-		const roles = userRoles?.map((ur) => ur.roles.name) || [];
+		// Extract role names and IDs
+		const roles = userRoles?.map((ur: any) => ur.roles.name) || [];
+		const roleIds = userRoles?.map((ur: any) => ur.roles.id) || [];
 
 		// Get permissions for these roles
 		const { data: rolePermissions, error: permissionsError } = await supabase
@@ -81,10 +81,7 @@ export function withAuth(handler: AuthenticatedHandler) {
         )
       `
 			)
-			.in(
-				"role_id",
-				userRoles.map((ur) => ur.roles.id)
-			);
+			.in("role_id", roleIds);
 
 		if (permissionsError) {
 			console.error("Error fetching permissions:", permissionsError);
@@ -95,7 +92,8 @@ export function withAuth(handler: AuthenticatedHandler) {
 		}
 
 		// Extract permission names
-		const permissions = rolePermissions?.map((rp) => rp.permissions.name) || [];
+		const permissions =
+			rolePermissions?.map((rp: any) => rp.permissions.name) || [];
 
 		// Pass the authenticated user with roles and permissions to the handler
 		const user = {
