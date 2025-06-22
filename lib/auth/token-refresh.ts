@@ -13,6 +13,12 @@ export function setupTokenRefresh() {
 	// Function to check and refresh token if needed
 	const checkAndRefreshToken = async () => {
 		try {
+			// For token refresh, we actually do need the session to get expiry info
+			// but we'll validate the user first
+			const { data: userData, error: userError } =
+				await supabase.auth.getUser();
+			if (!userData.user || userError) return;
+
 			const { data } = await supabase.auth.getSession();
 			const session = data.session;
 

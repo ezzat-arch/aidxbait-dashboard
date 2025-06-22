@@ -9,11 +9,13 @@ import { createClient } from "@/lib/supabase/client";
 import { setupTokenRefresh } from "@/lib/auth/token-refresh";
 import { type Permission, Role, type RbacUser } from "@/types/permission-types";
 import { getPermissionsForRoles, hasPermission } from "@/lib/rbac/permissions";
+import type { UserData } from "@/types/user-types";
 
 type UserContextType = {
 	user: User | null;
 	session: Session | null;
 	rbacUser: RbacUser | null;
+	appUser: UserData | null;
 	refreshUser: () => Promise<void>;
 	clearUser: () => void;
 	isLoading: boolean;
@@ -25,6 +27,7 @@ const UserContext = createContext<UserContextType>({
 	user: null,
 	session: null,
 	rbacUser: null,
+	appUser: null,
 	refreshUser: async () => {},
 	clearUser: () => {},
 	isLoading: true,
@@ -42,57 +45,53 @@ export function UserProvider({
 	const [user, setUser] = useState<User | null>(initialSession?.user || null);
 	const [session, setSession] = useState<Session | null>(initialSession);
 	const [rbacUser, setRbacUser] = useState<RbacUser | null>(null);
+	const [appUser, setAppUser] = useState<UserData | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const supabase = createClient();
 
-	// Fetch user roles and permissions
-	const fetchUserRolesAndPermissions = async (userId: string) => {
+	// Fetch user data and permissions
+	const fetchUserData = async (supabaseId: string) => {
 		try {
-			// Fetch user roles from the database
-			const { data: userRoles, error: rolesError } = await supabase
-				.from("user_roles")
-				.select(
-					`
-          role_id,
-          roles (
-            id,
-            name
-          )
-        `
-				)
-				.eq("user_id", userId);
+			const { data: userRecord, error } = await supabase
+				.from("users")
+				.select("*")
+				.eq("supabase_id", supabaseId)
+				.single();
 
-			if (rolesError) throw rolesError;
+			if (error || !userRecord) throw error;
 
-			// Extract role names
-			const roles =
-				userRoles?.map(
-					(ur: { role_id: string; roles: { id: string; name: string } }) =>
-						ur.roles.name as Role
-				) || [];
+			const { data: adminData } = await supabase
+				.from("admins")
+				.select("id")
+				.eq("user_id", userRecord.id)
+				.single();
 
-			// If no roles assigned, default to guest
-			if (roles.length === 0) {
-				roles.push(Role.Guest);
-			}
+			const { data: superData } = await supabase
+				.from("superusers")
+				.select("id")
+				.eq("user_id", userRecord.id)
+				.single();
 
-			// Calculate permissions based on roles
+			const roles: Role[] = [userRecord.user_type as Role];
 			const permissions = getPermissionsForRoles(roles);
 
-			// Create RBAC user object
-			const rbacUserData: RbacUser = {
-				id: userId,
-				email: user?.email || "",
+			setAppUser({
+				...userRecord,
+				admin_id: adminData?.id ?? null,
+				superuser_id: superData?.id ?? null,
+			});
+
+			setRbacUser({
+				id: String(userRecord.id),
+				email: userRecord.email || "",
 				roles,
 				permissions,
-			};
-
-			setRbacUser(rbacUserData);
-		} catch (error) {
-			console.error("Error fetching user roles:", error);
-			// Set default guest role if there's an error
+			});
+		} catch (err) {
+			console.error("Error fetching user data:", err);
+			setAppUser(null);
 			setRbacUser({
-				id: userId,
+				id: supabaseId,
 				email: user?.email || "",
 				roles: [Role.Guest],
 				permissions: getPermissionsForRoles([Role.Guest]),
@@ -110,9 +109,10 @@ export function UserProvider({
 				setSession(session);
 
 				if (session?.user) {
-					await fetchUserRolesAndPermissions(session.user.id);
+					await fetchUserData(session.user.id);
 				} else {
 					setRbacUser(null);
+					setAppUser(null);
 				}
 
 				setIsLoading(false);
@@ -124,7 +124,7 @@ export function UserProvider({
 
 		// Initial loading state update and role fetch
 		if (user) {
-			fetchUserRolesAndPermissions(user.id).finally(() => {
+			fetchUserData(user.id).finally(() => {
 				setIsLoading(false);
 			});
 		} else {
@@ -141,13 +141,18 @@ export function UserProvider({
 		setIsLoading(true);
 		try {
 			const {
-				data: { session },
-			} = await supabase.auth.getSession();
-			setUser(session?.user || null);
-			setSession(session);
+				data: { user: refreshedUser },
+				error: authError,
+			} = await supabase.auth.getUser();
 
-			if (session?.user) {
-				await fetchUserRolesAndPermissions(session.user.id);
+			if (!authError && refreshedUser) {
+				setUser(refreshedUser);
+				// We don't get the session from getUser, but we can keep the existing one
+				// or get it separately if needed
+				await fetchUserData(refreshedUser.id);
+			} else {
+				setUser(null);
+				setSession(null);
 			}
 		} catch (error) {
 			console.error("Error refreshing user:", error);
@@ -160,6 +165,7 @@ export function UserProvider({
 		setUser(null);
 		setSession(null);
 		setRbacUser(null);
+		setAppUser(null);
 	};
 
 	// Helper function to check if user has a specific permission
@@ -178,6 +184,7 @@ export function UserProvider({
 				user,
 				session,
 				rbacUser,
+				appUser,
 				refreshUser,
 				clearUser,
 				isLoading,

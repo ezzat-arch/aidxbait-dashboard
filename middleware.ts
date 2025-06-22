@@ -6,6 +6,7 @@ import {
 	ROUTE_PERMISSIONS,
 	API_PERMISSIONS,
 } from "@/lib/rbac/permissions-config";
+import { getPermissionsForRoles } from "@/lib/rbac/permissions";
 
 // Define protected routes and API paths
 const PROTECTED_ROUTES = ["/dashboard", "/api/protected"];
@@ -57,16 +58,17 @@ export async function middleware(request: NextRequest) {
 		}
 	);
 
-	// Check if the session exists
+	// Check if the user exists (more secure than getSession)
 	const {
-		data: { session },
-	} = await supabase.auth.getSession();
+		data: { user },
+		error: authError,
+	} = await supabase.auth.getUser();
 
 	const requestPath = request.nextUrl.pathname;
 	const requestMethod = request.method;
 
-	// If no session, handle public/protected routes
-	if (!session) {
+	// If no user or auth error, handle public/protected routes
+	if (!user || authError) {
 		// For API routes, return 401 if protected
 		if (requestPath.startsWith("/api/") && isProtectedRoute(requestPath)) {
 			return NextResponse.json(
@@ -85,46 +87,34 @@ export async function middleware(request: NextRequest) {
 		return supabaseResponse;
 	}
 
-	// User is authenticated, fetch their roles
-	const { data: userRoles, error: rolesError } = await supabase
-		.from("user_roles")
-		.select(
-			`
-      role_id,
-      roles (
-        id,
-        name
-      )
-    `
-		)
-		.eq("user_id", session.user.id);
+	// Fetch user record
+	const { data: userRecord, error: userError } = await supabase
+		.from("users")
+		.select("*")
+		.eq("supabase_id", user.id)
+		.single();
 
-	let userRoleNames: Role[] = [];
+	if (userError || !userRecord) {
+		return NextResponse.redirect(new URL("/login", request.url));
+	}
 
-	if (rolesError) {
-		console.error("Error fetching user roles:", rolesError);
-		// Default to no roles if there's an error
-		userRoleNames = [];
-	} else {
-		// Extract role names
-		userRoleNames = userRoles?.map((ur: any) => ur.roles.name as Role) || [];
+	const userRoleNames: Role[] = [userRecord.user_type as Role];
 
-		// If no roles assigned, default to guest
-		if (userRoleNames.length === 0) {
-			userRoleNames.push(Role.Guest);
-		}
+	if (
+		userRecord.user_type !== "admin" &&
+		userRecord.user_type !== "superuser"
+	) {
+		return NextResponse.redirect(
+			new URL("/login?error=unauthorized", request.url)
+		);
 	}
 
 	// Handle API routes - add auth headers
 	if (requestPath.startsWith("/api/")) {
 		// Add auth headers to API requests
-		supabaseResponse.headers.set("x-user-id", session.user.id);
-		supabaseResponse.headers.set("x-user-email", session.user.email || "");
+		supabaseResponse.headers.set("x-user-id", user.id);
+		supabaseResponse.headers.set("x-user-email", user.email || "");
 		supabaseResponse.headers.set("x-user-roles", JSON.stringify(userRoleNames));
-		supabaseResponse.headers.set(
-			"Authorization",
-			`Bearer ${session.access_token}`
-		);
 
 		// For protected API routes, check permissions
 		if (isProtectedRoute(requestPath)) {
@@ -151,7 +141,7 @@ export async function middleware(request: NextRequest) {
 				// Check if user has any of the required permissions based on their roles
 				const hasPermission = await checkUserPermissions(
 					supabase,
-					session.user.id,
+					userRoleNames,
 					requiredPermissions
 				);
 
@@ -178,7 +168,7 @@ export async function middleware(request: NextRequest) {
 		// Check if user has any of the required permissions
 		const hasPermission = await checkUserPermissions(
 			supabase,
-			session.user.id,
+			userRoleNames,
 			requiredPermissions
 		);
 
@@ -199,57 +189,12 @@ export async function middleware(request: NextRequest) {
 
 // Helper function to check if a user has any of the required permissions
 async function checkUserPermissions(
-	supabase: any,
-	userId: string,
+	_supabase: any,
+	userRoles: Role[],
 	requiredPermissions: Permission[]
 ): Promise<boolean> {
 	try {
-		// Get user roles
-		const { data: userRoles, error: rolesError } = await supabase
-			.from("user_roles")
-			.select(
-				`
-        roles (
-          id,
-          name
-        )
-      `
-			)
-			.eq("user_id", userId);
-
-		if (rolesError) throw rolesError;
-
-		// Extract role names
-		const roleNames = userRoles?.map((ur: any) => ur.roles.name as Role) || [];
-
-		// If no roles, default to guest
-		if (roleNames.length === 0) {
-			roleNames.push(Role.Guest);
-		}
-
-		// Get permissions for these roles
-		const { data: rolePermissions, error: permissionsError } = await supabase
-			.from("role_permissions")
-			.select(
-				`
-        permissions (
-          name
-        )
-      `
-			)
-			.in(
-				"role_id",
-				userRoles.map((ur: any) => ur.roles.id)
-			);
-
-		if (permissionsError) throw permissionsError;
-
-		// Extract permission names
-		const permissionNames =
-			rolePermissions?.map((rp: any) => rp.permissions.name as Permission) ||
-			[];
-
-		// Check if user has any of the required permissions
+		const permissionNames = getPermissionsForRoles(userRoles);
 		return requiredPermissions.some((permission) =>
 			permissionNames.includes(permission)
 		);

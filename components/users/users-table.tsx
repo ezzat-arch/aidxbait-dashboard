@@ -56,10 +56,6 @@ export function UsersTable() {
 					params.append("search", searchQuery);
 				}
 
-				if (statusFilter !== "all") {
-					params.append("status", statusFilter);
-				}
-
 				if (selectedRoles.length > 0) {
 					params.append("roles", selectedRoles.join(","));
 				}
@@ -94,7 +90,7 @@ export function UsersTable() {
 		};
 
 		fetchUsers();
-	}, [page, searchQuery, statusFilter, selectedRoles, toast]);
+	}, [page, searchQuery, selectedRoles, toast]);
 
 	function formatDate(dateString: string) {
 		return new Date(dateString).toLocaleDateString("en-US", {
@@ -102,19 +98,6 @@ export function UsersTable() {
 			month: "short",
 			day: "numeric",
 		});
-	}
-
-	function getStatusColor(status: string) {
-		switch (status) {
-			case "active":
-				return "bg-green-500/20 text-green-500 hover:bg-green-500/30";
-			case "inactive":
-				return "bg-red-500/20 text-red-500 hover:bg-red-500/30";
-			case "pending":
-				return "bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30";
-			default:
-				return "bg-gray-500/20 text-gray-500 hover:bg-gray-500/30";
-		}
 	}
 
 	return (
@@ -175,29 +158,40 @@ export function UsersTable() {
 									<TableCell>
 										<div className="flex items-center space-x-3">
 											<Avatar className="h-8 w-8">
-												<AvatarImage src="/placeholder.svg" alt={user.name} />
-												<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+												<AvatarImage
+													src="/placeholder.svg"
+													alt={user.first_name || "User"}
+												/>
+												<AvatarFallback>
+													{user.first_name?.charAt(0) ||
+														user.last_name?.charAt(0) ||
+														"U"}
+												</AvatarFallback>
 											</Avatar>
 											<div>
-												<div className="font-medium">{user.name}</div>
+												<div className="font-medium">
+													{[user.first_name, user.last_name]
+														.filter(Boolean)
+														.join(" ") || "No name"}
+												</div>
 												<div className="text-sm text-muted-foreground">
-													{user.email}
+													{user.email || "No email"}
 												</div>
 											</div>
 										</div>
 									</TableCell>
 									<TableCell>
-										<div className="capitalize">{user.role}</div>
+										<div className="capitalize">{user.user_type}</div>
 									</TableCell>
 									<TableCell>
 										<Badge
 											variant="outline"
-											className={getStatusColor(user.status)}
+											className="bg-green-500/20 text-green-500 hover:bg-green-500/30"
 										>
-											{user.status}
+											Active
 										</Badge>
 									</TableCell>
-									<TableCell>{formatDate(user.lastActive)}</TableCell>
+									<TableCell>{formatDate(user.created_at)}</TableCell>
 									<TableCell>
 										<DropdownMenu>
 											<DropdownMenuTrigger asChild>

@@ -14,8 +14,7 @@ export const GET = withPermission(
 		const page = Number.parseInt(searchParams.get("page") || "1");
 		const limit = Number.parseInt(searchParams.get("limit") || "10");
 		const search = searchParams.get("search") || "";
-		const status = searchParams.get("status") || "";
-		const roles = searchParams.get("roles")?.split(",") || [];
+                const roles = searchParams.get("roles")?.split(",") || [];
 
 		// Calculate pagination
 		const from = (page - 1) * limit;
@@ -25,17 +24,15 @@ export const GET = withPermission(
 		let query = supabase.from("users").select("*", { count: "exact" });
 
 		// Apply filters if provided
-		if (search) {
-			query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
-		}
+                if (search) {
+                        query = query.or(
+                                `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`
+                        );
+                }
 
-		if (status && status !== "all") {
-			query = query.eq("status", status);
-		}
-
-		if (roles.length > 0) {
-			query = query.in("role", roles);
-		}
+                if (roles.length > 0) {
+                        query = query.in("user_type", roles);
+                }
 
 		// Apply pagination
 		query = query.range(from, to);
@@ -69,30 +66,33 @@ export const POST = withPermission(
 			const userData = await req.json();
 
 			// Validate required fields
-			if (
-				!userData.name ||
-				!userData.email ||
-				!userData.role ||
-				!userData.status
-			) {
-				return NextResponse.json(
-					{ error: "Missing required fields" },
-					{ status: 400 }
-				);
-			}
+                        if (
+                                !userData.first_name ||
+                                !userData.last_name ||
+                                !userData.phone_number ||
+                                !userData.user_type
+                        ) {
+                                return NextResponse.json(
+                                        { error: "Missing required fields" },
+                                        { status: 400 }
+                                );
+                        }
 
-			// Insert new user
-			const { data, error } = await supabase
-				.from("users")
-				.insert({
-					name: userData.name,
-					email: userData.email,
-					role: userData.role,
-					status: userData.status,
-					last_active: new Date().toISOString(),
-				})
-				.select()
-				.single();
+                        // Insert new user
+                        const { data, error } = await supabase
+                                .from("users")
+                                .insert({
+                                        phone_number: userData.phone_number,
+                                        email: userData.email,
+                                        first_name: userData.first_name,
+                                        last_name: userData.last_name,
+                                        user_type: userData.user_type,
+                                        image_url: userData.image_url || null,
+                                        created_at: new Date().toISOString(),
+                                        updated_at: new Date().toISOString(),
+                                })
+                                .select()
+                                .single();
 
 			if (error) {
 				return NextResponse.json({ error: error.message }, { status: 500 });

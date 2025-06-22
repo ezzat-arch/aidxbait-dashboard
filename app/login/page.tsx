@@ -8,10 +8,11 @@ export default async function LoginPage() {
 	const supabase = await createClient();
 
 	const {
-		data: { session },
-	} = await supabase.auth.getSession();
+		data: { user },
+		error: authError,
+	} = await supabase.auth.getUser();
 
-	if (session) {
+	if (user && !authError) {
 		redirect("/dashboard/users");
 	}
 

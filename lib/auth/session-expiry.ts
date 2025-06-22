@@ -10,8 +10,8 @@ export function setupSessionExpiryHandler(onExpire: () => void) {
 
 	// Function to check session status
 	const checkSession = async () => {
-		const { data } = await supabase.auth.getSession();
-		if (!data.session) {
+		const { data, error } = await supabase.auth.getUser();
+		if (!data.user || error) {
 			onExpire();
 		}
 	};

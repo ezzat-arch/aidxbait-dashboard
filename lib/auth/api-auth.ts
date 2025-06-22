@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import type { Permission } from "@/types/permission-types";
+import type { Permission, Role } from "@/types/permission-types";
+import { getPermissionsForRoles } from "@/lib/rbac/permissions";
 
 export type AuthenticatedHandler = (
 	req: NextRequest,
@@ -22,83 +23,47 @@ export function withAuth(handler: AuthenticatedHandler) {
 		const supabase = await createClient();
 
 		const {
-			data: { session },
-		} = await supabase.auth.getSession();
+			data: { user: authUser },
+			error: authError,
+		} = await supabase.auth.getUser();
 
-		if (!session) {
+		if (!authUser || authError) {
 			return NextResponse.json(
 				{ error: "Authentication required" },
 				{ status: 401 }
 			);
 		}
 
-		// Check if user is an admin
-		const { data: adminData, error: adminError } = await supabase
-			.from("admins")
+		// Get user record
+		const { data: userRecord, error } = await supabase
+			.from("users")
 			.select("*")
-			.eq("supabase_id", session.user.id)
+			.eq("supabase_id", authUser.id)
 			.single();
 
-		if (adminError || !adminData) {
+		if (error || !userRecord) {
 			return NextResponse.json(
 				{ error: "Unauthorized access" },
 				{ status: 403 }
 			);
 		}
 
-		// Get user roles
-		const { data: userRoles, error: rolesError } = await supabase
-			.from("user_roles")
-			.select(
-				`
-        roles (
-          name,
-          id
-        )
-      `
-			)
-			.eq("user_id", adminData.id);
-
-		if (rolesError) {
-			console.error("Error fetching user roles:", rolesError);
+		if (
+			userRecord.user_type !== "admin" &&
+			userRecord.user_type !== "superuser"
+		) {
 			return NextResponse.json(
-				{ error: "Error fetching user roles" },
-				{ status: 500 }
+				{ error: "Unauthorized access" },
+				{ status: 403 }
 			);
 		}
 
-		// Extract role names and IDs
-		const roles = userRoles?.map((ur: any) => ur.roles.name) || [];
-		const roleIds = userRoles?.map((ur: any) => ur.roles.id) || [];
+		const roles: Role[] = [userRecord.user_type as Role];
+		const permissions = getPermissionsForRoles(roles);
 
-		// Get permissions for these roles
-		const { data: rolePermissions, error: permissionsError } = await supabase
-			.from("role_permissions")
-			.select(
-				`
-        permissions (
-          name
-        )
-      `
-			)
-			.in("role_id", roleIds);
-
-		if (permissionsError) {
-			console.error("Error fetching permissions:", permissionsError);
-			return NextResponse.json(
-				{ error: "Error fetching permissions" },
-				{ status: 500 }
-			);
-		}
-
-		// Extract permission names
-		const permissions =
-			rolePermissions?.map((rp: any) => rp.permissions.name) || [];
-
-		// Pass the authenticated user with roles and permissions to the handler
 		const user = {
-			id: session.user.id,
-			email: session.user.email || "",
+			id: String(userRecord.id),
+			email: userRecord.email || "",
 			roles,
 			permissions,
 		};

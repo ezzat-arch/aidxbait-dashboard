@@ -92,30 +92,36 @@ export function UsersHeader() {
 						<DropdownMenuContent className="w-56">
 							<DropdownMenuLabel>Filter by role</DropdownMenuLabel>
 							<DropdownMenuSeparator />
-							<DropdownMenuCheckboxItem
-								checked={selectedRoles.includes("admin")}
-								onCheckedChange={() => toggleRole("admin")}
-							>
-								Admin
-							</DropdownMenuCheckboxItem>
-							<DropdownMenuCheckboxItem
-								checked={selectedRoles.includes("manager")}
-								onCheckedChange={() => toggleRole("manager")}
-							>
-								Manager
-							</DropdownMenuCheckboxItem>
-							<DropdownMenuCheckboxItem
-								checked={selectedRoles.includes("user")}
-								onCheckedChange={() => toggleRole("user")}
-							>
-								User
-							</DropdownMenuCheckboxItem>
-							<DropdownMenuCheckboxItem
-								checked={selectedRoles.includes("guest")}
-								onCheckedChange={() => toggleRole("guest")}
-							>
-								Guest
-							</DropdownMenuCheckboxItem>
+                                                        <DropdownMenuCheckboxItem
+                                                                checked={selectedRoles.includes("superuser")}
+                                                                onCheckedChange={() => toggleRole("superuser")}
+                                                        >
+                                                                Superuser
+                                                        </DropdownMenuCheckboxItem>
+                                                        <DropdownMenuCheckboxItem
+                                                                checked={selectedRoles.includes("admin")}
+                                                                onCheckedChange={() => toggleRole("admin")}
+                                                        >
+                                                                Admin
+                                                        </DropdownMenuCheckboxItem>
+                                                        <DropdownMenuCheckboxItem
+                                                                checked={selectedRoles.includes("therapist")}
+                                                                onCheckedChange={() => toggleRole("therapist")}
+                                                        >
+                                                                Therapist
+                                                        </DropdownMenuCheckboxItem>
+                                                        <DropdownMenuCheckboxItem
+                                                                checked={selectedRoles.includes("consultant")}
+                                                                onCheckedChange={() => toggleRole("consultant")}
+                                                        >
+                                                                Consultant
+                                                        </DropdownMenuCheckboxItem>
+                                                        <DropdownMenuCheckboxItem
+                                                                checked={selectedRoles.includes("patient")}
+                                                                onCheckedChange={() => toggleRole("patient")}
+                                                        >
+                                                                Patient
+                                                        </DropdownMenuCheckboxItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>

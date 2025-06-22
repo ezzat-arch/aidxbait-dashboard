@@ -22,9 +22,11 @@ export default async function RootLayout({
 }) {
 	const supabase = await createClient();
 
-	const {
-		data: { session },
-	} = await supabase.auth.getSession();
+	// For the root layout, we need to get the session to pass to UserProvider
+	// but we'll validate the user first for security
+	const { data: userData } = await supabase.auth.getUser();
+	const { data } = await supabase.auth.getSession();
+	const session = userData.user ? data.session : null;
 
 	return (
 		<html lang="en" suppressHydrationWarning>

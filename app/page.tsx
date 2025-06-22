@@ -6,10 +6,11 @@ export default async function Home() {
 	const supabase = await createClient();
 
 	const {
-		data: { session },
-	} = await supabase.auth.getSession();
+		data: { user },
+		error: authError,
+	} = await supabase.auth.getUser();
 
-	if (!session) {
+	if (!user || authError) {
 		redirect("/login");
 	} else {
 		redirect("/dashboard/users");

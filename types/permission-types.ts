@@ -21,20 +21,22 @@ export enum Permission {
 
 // Define role types
 export enum Role {
-	SuperAdmin = "super_admin",
-	Admin = "admin",
-	Manager = "manager",
-	User = "user",
-	Guest = "guest",
+        Superuser = "superuser",
+        Admin = "admin",
+        Therapist = "therapist",
+        Consultant = "consultant",
+        Patient = "patient",
+        Guest = "guest",
 }
 
 // Define role-permission mapping
 export interface RolePermissions {
-	[Role.SuperAdmin]: Permission[];
-	[Role.Admin]: Permission[];
-	[Role.Manager]: Permission[];
-	[Role.User]: Permission[];
-	[Role.Guest]: Permission[];
+        [Role.Superuser]: Permission[];
+        [Role.Admin]: Permission[];
+        [Role.Therapist]: Permission[];
+        [Role.Consultant]: Permission[];
+        [Role.Patient]: Permission[];
+        [Role.Guest]: Permission[];
 }
 
 // Define user role type
