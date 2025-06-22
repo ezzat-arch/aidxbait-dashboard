@@ -1,23 +1,19 @@
 "use client";
 
 import type React from "react";
-
 import { createContext, useContext, useEffect, useState } from "react";
-import type { Session, User, AuthChangeEvent } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
-import { setupTokenRefresh } from "@/lib/auth/token-refresh";
 import { type Permission, Role, type RbacUser } from "@/types/permission-types";
 import { getPermissionsForRoles, hasPermission } from "@/lib/rbac/permissions";
 import type { UserData } from "@/types/user-types";
 
 type UserContextType = {
 	user: User | null;
-	session: Session | null;
 	rbacUser: RbacUser | null;
 	appUser: UserData | null;
 	refreshUser: () => Promise<void>;
-	clearUser: () => void;
 	isLoading: boolean;
 	hasPermission: (permission: Permission) => boolean;
 	hasRole: (role: Role) => boolean;
@@ -25,25 +21,16 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType>({
 	user: null,
-	session: null,
 	rbacUser: null,
 	appUser: null,
 	refreshUser: async () => {},
-	clearUser: () => {},
 	isLoading: true,
 	hasPermission: () => false,
 	hasRole: () => false,
 });
 
-export function UserProvider({
-	children,
-	initialSession,
-}: {
-	children: React.ReactNode;
-	initialSession: Session | null;
-}) {
-	const [user, setUser] = useState<User | null>(initialSession?.user || null);
-	const [session, setSession] = useState<Session | null>(initialSession);
+export function UserProvider({ children }: { children: React.ReactNode }) {
+	const [user, setUser] = useState<User | null>(null);
 	const [rbacUser, setRbacUser] = useState<RbacUser | null>(null);
 	const [appUser, setAppUser] = useState<UserData | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
@@ -99,43 +86,35 @@ export function UserProvider({
 		}
 	};
 
+	// Initial user fetch
 	useEffect(() => {
-		// Set up auth state change listener
-		const {
-			data: { subscription },
-		} = supabase.auth.onAuthStateChange(
-			async (_event: AuthChangeEvent, session: Session | null) => {
-				setUser(session?.user || null);
-				setSession(session);
+		const getInitialUser = async () => {
+			try {
+				const {
+					data: { user: currentUser },
+					error,
+				} = await supabase.auth.getUser();
 
-				if (session?.user) {
-					await fetchUserData(session.user.id);
+				if (!error && currentUser) {
+					setUser(currentUser);
+					await fetchUserData(currentUser.id);
 				} else {
+					setUser(null);
 					setRbacUser(null);
 					setAppUser(null);
 				}
-
+			} catch (error) {
+				console.error("Error getting initial user:", error);
+				setUser(null);
+				setRbacUser(null);
+				setAppUser(null);
+			} finally {
 				setIsLoading(false);
 			}
-		);
-
-		// Set up token refresh
-		const cleanupTokenRefresh = setupTokenRefresh();
-
-		// Initial loading state update and role fetch
-		if (user) {
-			fetchUserData(user.id).finally(() => {
-				setIsLoading(false);
-			});
-		} else {
-			setIsLoading(false);
-		}
-
-		return () => {
-			subscription.unsubscribe();
-			cleanupTokenRefresh();
 		};
-	}, [supabase, user?.id]);
+
+		getInitialUser();
+	}, []);
 
 	const refreshUser = async () => {
 		setIsLoading(true);
@@ -147,25 +126,17 @@ export function UserProvider({
 
 			if (!authError && refreshedUser) {
 				setUser(refreshedUser);
-				// We don't get the session from getUser, but we can keep the existing one
-				// or get it separately if needed
 				await fetchUserData(refreshedUser.id);
 			} else {
 				setUser(null);
-				setSession(null);
+				setRbacUser(null);
+				setAppUser(null);
 			}
 		} catch (error) {
 			console.error("Error refreshing user:", error);
 		} finally {
 			setIsLoading(false);
 		}
-	};
-
-	const clearUser = () => {
-		setUser(null);
-		setSession(null);
-		setRbacUser(null);
-		setAppUser(null);
 	};
 
 	// Helper function to check if user has a specific permission
@@ -182,11 +153,9 @@ export function UserProvider({
 		<UserContext.Provider
 			value={{
 				user,
-				session,
 				rbacUser,
 				appUser,
 				refreshUser,
-				clearUser,
 				isLoading,
 				hasPermission: checkPermission,
 				hasRole: checkRole,

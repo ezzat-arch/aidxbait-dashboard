@@ -28,7 +28,7 @@ export function DashboardSidebar() {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { toast } = useToast();
-	const { user, clearUser, rbacUser } = useUserContext();
+	const { user, rbacUser } = useUserContext();
 
 	const supabase = createClient();
 
@@ -62,7 +62,6 @@ export function DashboardSidebar() {
 	async function handleLogout() {
 		try {
 			await supabase.auth.signOut();
-			clearUser();
 			toast({
 				title: "Logged out",
 				description: "You have been logged out successfully",
