@@ -17,26 +17,32 @@ export enum Permission {
 	// Admin permissions
 	ManageRoles = "admin:manage-roles",
 	ViewAuditLogs = "admin:view-audit-logs",
+
+	// Store management permissions
+	ViewStore = "store:view",
+	CreateStoreItems = "store:create",
+	UpdateStoreItems = "store:update",
+	DeleteStoreItems = "store:delete",
 }
 
 // Define role types
 export enum Role {
-        Superuser = "superuser",
-        Admin = "admin",
-        Therapist = "therapist",
-        Consultant = "consultant",
-        Patient = "patient",
-        Guest = "guest",
+	Superuser = "superuser",
+	Admin = "admin",
+	Therapist = "therapist",
+	Consultant = "consultant",
+	Patient = "patient",
+	Guest = "guest",
 }
 
 // Define role-permission mapping
 export interface RolePermissions {
-        [Role.Superuser]: Permission[];
-        [Role.Admin]: Permission[];
-        [Role.Therapist]: Permission[];
-        [Role.Consultant]: Permission[];
-        [Role.Patient]: Permission[];
-        [Role.Guest]: Permission[];
+	[Role.Superuser]: Permission[];
+	[Role.Admin]: Permission[];
+	[Role.Therapist]: Permission[];
+	[Role.Consultant]: Permission[];
+	[Role.Patient]: Permission[];
+	[Role.Guest]: Permission[];
 }
 
 // Define user role type

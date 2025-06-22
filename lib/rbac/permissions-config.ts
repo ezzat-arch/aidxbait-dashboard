@@ -15,6 +15,7 @@ export const ROLE_PERMISSIONS: RolePermissions = {
 		Permission.ViewSettings,
 		Permission.UpdateSettings,
 		Permission.ViewAuditLogs,
+		Permission.ViewStore, // Admins can view store
 	],
 	[Role.Therapist]: [],
 	[Role.Consultant]: [],
@@ -31,6 +32,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
 	"/dashboard/settings": [Permission.ViewSettings],
 	"/dashboard/admin": [Permission.ManageRoles],
 	"/dashboard/audit-logs": [Permission.ViewAuditLogs],
+	"/dashboard/store": [Permission.ViewStore],
 };
 
 // Define API route permissions
@@ -43,4 +45,8 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"GET /api/protected/settings": [Permission.ViewSettings],
 	"PUT /api/protected/settings": [Permission.UpdateSettings],
 	"GET /api/protected/audit-logs": [Permission.ViewAuditLogs],
+	"GET /api/protected/store": [Permission.ViewStore],
+	"POST /api/protected/store": [Permission.CreateStoreItems],
+	"PUT /api/protected/store": [Permission.UpdateStoreItems],
+	"DELETE /api/protected/store": [Permission.DeleteStoreItems],
 };
