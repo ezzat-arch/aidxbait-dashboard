@@ -43,21 +43,39 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 				.from("users")
 				.select("*")
 				.eq("supabase_id", supabaseId)
-				.single();
+				.maybeSingle();
 
-			if (error || !userRecord) throw error;
+			if (error) {
+				console.error("Error fetching user record:", error);
+				throw error;
+			}
+
+			// If no user record exists, create a basic one or set default role
+			if (!userRecord) {
+				console.warn(`No user record found for supabase_id: ${supabaseId}`);
+
+				// Set default role for user without a record
+				setAppUser(null);
+				setRbacUser({
+					id: supabaseId,
+					email: user?.email || "",
+					roles: [Role.Guest],
+					permissions: getPermissionsForRoles([Role.Guest]),
+				});
+				return;
+			}
 
 			const { data: adminData } = await supabase
 				.from("admins")
 				.select("id")
 				.eq("user_id", userRecord.id)
-				.single();
+				.maybeSingle();
 
 			const { data: superData } = await supabase
 				.from("superusers")
 				.select("id")
 				.eq("user_id", userRecord.id)
-				.single();
+				.maybeSingle();
 
 			const roles: Role[] = [userRecord.user_type as Role];
 			const permissions = getPermissionsForRoles(roles);

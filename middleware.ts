@@ -77,10 +77,18 @@ export async function middleware(request: NextRequest) {
 		.from("users")
 		.select("*")
 		.eq("supabase_id", user.id)
-		.single();
+		.maybeSingle();
 
-	if (userError || !userRecord) {
-		return NextResponse.redirect(new URL("/login", request.url));
+	if (userError) {
+		console.error("Database error in middleware:", userError);
+		return NextResponse.redirect(new URL("/login?error=database", request.url));
+	}
+
+	if (!userRecord) {
+		console.warn(`No user record found for supabase_id: ${user.id}`);
+		return NextResponse.redirect(
+			new URL("/login?error=no-account", request.url)
+		);
 	}
 
 	const userRoleNames: Role[] = [userRecord.user_type as Role];

@@ -20,8 +20,8 @@
  */
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -160,9 +160,46 @@ export function LoginForm() {
 	const [credentials, setCredentials] = useState({ email: "", password: "" });
 
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { toast } = useToast();
 	const { refreshUser } = useUserContext();
 	const supabase = createClient();
+
+	// Handle URL error parameters
+	useEffect(() => {
+		const error = searchParams?.get("error");
+		if (error) {
+			let errorMessage = "";
+			let errorTitle = "Authentication Error";
+
+			switch (error) {
+				case "database":
+					errorTitle = "Database Error";
+					errorMessage =
+						"There was a database connectivity issue. Please try again or contact support.";
+					break;
+				case "no-account":
+					errorTitle = "Account Not Found";
+					errorMessage =
+						"Your account was not found in our system. Please contact an administrator to create your account.";
+					break;
+				case "unauthorized":
+					errorTitle = "Access Denied";
+					errorMessage =
+						"You don't have permission to access this application.";
+					break;
+				default:
+					errorMessage =
+						"An authentication error occurred. Please try logging in again.";
+			}
+
+			toast({
+				variant: "destructive",
+				title: errorTitle,
+				description: errorMessage,
+			});
+		}
+	}, [searchParams, toast]);
 
 	const loginForm = useForm<LoginFormData>({
 		resolver: zodResolver(loginSchema),

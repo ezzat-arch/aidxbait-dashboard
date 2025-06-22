@@ -39,11 +39,17 @@ export function withAuth(handler: AuthenticatedHandler) {
 			.from("users")
 			.select("*")
 			.eq("supabase_id", authUser.id)
-			.single();
+			.maybeSingle();
 
-		if (error || !userRecord) {
+		if (error) {
+			console.error("Database error fetching user record:", error);
+			return NextResponse.json({ error: "Database error" }, { status: 500 });
+		}
+
+		if (!userRecord) {
+			console.warn(`No user record found for supabase_id: ${authUser.id}`);
 			return NextResponse.json(
-				{ error: "Unauthorized access" },
+				{ error: "User account not found. Please contact an administrator." },
 				{ status: 403 }
 			);
 		}
