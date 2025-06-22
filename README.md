@@ -102,6 +102,13 @@ The application includes a comprehensive RBAC system with the following roles:
 - **Super User**: Full system access
 - **Admin**: User management, Operations overview
 
+### Customizing Role Permissions
+
+Role and page access is entirely driven from configuration.
+Update `lib/rbac/permissions-config.ts` to change which actions or pages are
+available to each role. Both the server middleware and client-side permission
+gates read from this file, so changes are applied consistently across the app.
+
 ### Environment Variables for Production
 
 ```env

@@ -6,22 +6,20 @@ import {
 
 // Define which permissions each role has
 export const ROLE_PERMISSIONS: RolePermissions = {
-        [Role.Superuser]: Object.values(Permission), // Superusers have all permissions
-        [Role.Admin]: [
-                Permission.ViewUsers,
-                Permission.CreateUsers,
-                Permission.UpdateUsers,
-                Permission.DeleteUsers,
-                Permission.ViewAnalytics,
-		Permission.ExportAnalytics,
+	[Role.Superuser]: Object.values(Permission), // Superusers have all permissions
+	[Role.Admin]: [
+		Permission.ViewUsers,
+		Permission.CreateUsers,
+		Permission.UpdateUsers,
+		Permission.DeleteUsers,
 		Permission.ViewSettings,
 		Permission.UpdateSettings,
-                Permission.ViewAuditLogs,
-        ],
-        [Role.Therapist]: [Permission.ViewUsers],
-        [Role.Consultant]: [Permission.ViewUsers],
-        [Role.Patient]: [Permission.ViewUsers],
-        [Role.Guest]: [Permission.ViewUsers],
+		Permission.ViewAuditLogs,
+	],
+	[Role.Therapist]: [],
+	[Role.Consultant]: [],
+	[Role.Patient]: [],
+	[Role.Guest]: [],
 };
 
 // Define route access based on permissions
