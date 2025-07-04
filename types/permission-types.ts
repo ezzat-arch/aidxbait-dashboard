@@ -23,6 +23,13 @@ export enum Permission {
 	CreateStoreItems = "store:create",
 	UpdateStoreItems = "store:update",
 	DeleteStoreItems = "store:delete",
+
+	// Exercise Programs permissions
+	ViewExercisePrograms = "exercise-programs:view",
+	CreateExercisePrograms = "exercise-programs:create",
+	UpdateExercisePrograms = "exercise-programs:update",
+	DeleteExercisePrograms = "exercise-programs:delete",
+	ManageVideos = "exercise-programs:manage-videos",
 }
 
 // Define role types

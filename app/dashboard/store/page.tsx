@@ -1,3 +1,4 @@
+"use client";
 import { PermissionGate } from "@/components/rbac/permission-gate";
 import { Permission } from "@/types/permission-types";
 import { StoreDashboard } from "@/components/store/store-dashboard";

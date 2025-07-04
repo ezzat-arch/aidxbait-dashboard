@@ -33,6 +33,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
 	"/dashboard/admin": [Permission.ManageRoles],
 	"/dashboard/audit-logs": [Permission.ViewAuditLogs],
 	"/dashboard/store": [Permission.ViewStore],
+	"/dashboard/exercise-programs": [Permission.ViewExercisePrograms],
 };
 
 // Define API route permissions
@@ -49,4 +50,24 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"POST /api/protected/store": [Permission.CreateStoreItems],
 	"PUT /api/protected/store": [Permission.UpdateStoreItems],
 	"DELETE /api/protected/store": [Permission.DeleteStoreItems],
+
+	// Exercise Programs API permissions
+	"GET /api/protected/exercise-programs/videos": [
+		Permission.ViewExercisePrograms,
+	],
+	"POST /api/protected/exercise-programs/videos": [Permission.ManageVideos],
+	"PUT /api/protected/exercise-programs/videos": [Permission.ManageVideos],
+	"DELETE /api/protected/exercise-programs/videos": [Permission.ManageVideos],
+	"GET /api/protected/exercise-programs/programs": [
+		Permission.ViewExercisePrograms,
+	],
+	"POST /api/protected/exercise-programs/programs": [
+		Permission.CreateExercisePrograms,
+	],
+	"PUT /api/protected/exercise-programs/programs": [
+		Permission.UpdateExercisePrograms,
+	],
+	"DELETE /api/protected/exercise-programs/programs": [
+		Permission.DeleteExercisePrograms,
+	],
 };

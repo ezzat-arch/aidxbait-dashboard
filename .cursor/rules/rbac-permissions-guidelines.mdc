@@ -1,0 +1,93 @@
+---
+alwaysApply: true
+---
+
+## RBAC & Permissions – Adding a New Feature
+
+When you ship a **new feature** (a page, component, or API route) you MUST wire its permissions so that only the right roles can access it. The RBAC utilities live in `lib/rbac/permissions.ts` and `lib/rbac/permissions-config.ts`. Follow the checklist below in order – missing any step will break role-based access.
+
+1.  **Define the permission constant(s)**
+    • Open `types/permission-types.ts` and append one (or more) entries to the `Permission` enum. Stick to the `<domain>:<action>` naming convention (e.g. `reports:view`).
+
+2.  **Grant the permission to the relevant roles**
+    • Edit `lib/rbac/permissions-config.ts` → `ROLE_PERMISSIONS`.
+    • Add the new `Permission` value(s) to every `Role.*` array that should possess them.
+
+3.  **Protect front-end routes (pages/components)**
+    • Update `ROUTE_PERMISSIONS` in the same file:
+
+    ```ts
+    "/dashboard/reports": [Permission.ViewReports],
+    "/dashboard/reports/create": [Permission.CreateReports],
+    ```
+
+    • Inside React, wrap UI with `<PermissionGate permissions={[Permission.ViewReports]}>` or use the `hasPermission` helpers – never hard-code role names in components.
+
+4.  **Protect API routes**
+    • In `API_PERMISSIONS` map each `METHOD /path` string to the permission(s):
+
+    ```ts
+    "GET /api/protected/reports": [Permission.ViewReports],
+    "POST /api/protected/reports": [Permission.CreateReports],
+    ```
+
+    • Inside the handler file wrap the exported function with `withPermission([Permission.XXX], handler)` to enforce server-side RBAC.
+
+5.  **Use the helpers – do NOT reinvent checks**
+    • `hasPermission`, `hasAllPermissions`, `hasAnyPermission`, `canAccessRoute`, `canAccessApi` (in `permissions.ts`) are the **single source of truth**. If you find yourself re-implementing logic, stop and import these.
+
+6.  **Testing**
+    • Log in as each role and confirm:
+    – Allowed roles can view the page and hit the endpoint.
+    – Forbidden roles receive a 403 and the UI hides navigation links.
+
+7.  **Documentation**
+    • Update this guide and any feature-specific README so future contributors know the required permission strings.
+
+> ️⭐ **Pro-tip:** When in doubt search for an existing feature (e.g. _store_) and mirror its full RBAC wiring end-to-end.
+> description:
+> globs:
+
+## RBAC & Permissions – Adding a New Feature
+
+When you ship a **new feature** (a page, component, or API route) you MUST wire its permissions so that only the right roles can access it. The RBAC utilities live in `lib/rbac/permissions.ts` and `lib/rbac/permissions-config.ts`. Follow the checklist below in order – missing any step will break role-based access.
+
+1.  **Define the permission constant(s)**
+    • Open `types/permission-types.ts` and append one (or more) entries to the `Permission` enum. Stick to the `<domain>:<action>` naming convention (e.g. `reports:view`).
+
+2.  **Grant the permission to the relevant roles**
+    • Edit `lib/rbac/permissions-config.ts` → `ROLE_PERMISSIONS`.
+    • Add the new `Permission` value(s) to every `Role.*` array that should possess them.
+
+3.  **Protect front-end routes (pages/components)**
+    • Update `ROUTE_PERMISSIONS` in the same file:
+
+    ```ts
+    "/dashboard/reports": [Permission.ViewReports],
+    "/dashboard/reports/create": [Permission.CreateReports],
+    ```
+
+    • Inside React, wrap UI with `<PermissionGate permissions={[Permission.ViewReports]}>` or use the `hasPermission` helpers – never hard-code role names in components.
+
+4.  **Protect API routes**
+    • In `API_PERMISSIONS` map each `METHOD /path` string to the permission(s):
+
+    ```ts
+    "GET /api/protected/reports": [Permission.ViewReports],
+    "POST /api/protected/reports": [Permission.CreateReports],
+    ```
+
+    • Inside the handler file wrap the exported function with `withPermission([Permission.XXX], handler)` to enforce server-side RBAC.
+
+5.  **Use the helpers – do NOT reinvent checks**
+    • `hasPermission`, `hasAllPermissions`, `hasAnyPermission`, `canAccessRoute`, `canAccessApi` (in `permissions.ts`) are the **single source of truth**. If you find yourself re-implementing logic, stop and import these.
+
+6.  **Testing**
+    • Log in as each role and confirm:
+    – Allowed roles can view the page and hit the endpoint.
+    – Forbidden roles receive a 403 and the UI hides navigation links.
+
+7.  **Documentation**
+    • Update this guide and any feature-specific README so future contributors know the required permission strings.
+
+> ️⭐ **Pro-tip:** When in doubt search for an existing feature (e.g. _store_) and mirror its full RBAC wiring end-to-end.

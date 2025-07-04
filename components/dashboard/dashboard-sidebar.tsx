@@ -12,6 +12,7 @@ import {
 	BarChart3,
 	Shield,
 	ShoppingBag,
+	Dumbbell,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +40,12 @@ export function DashboardSidebar() {
 			href: "/dashboard/users",
 			icon: Users,
 			permission: Permission.ViewUsers,
+		},
+		{
+			title: "Exercise Programs",
+			href: "/dashboard/exercise-programs",
+			icon: Dumbbell,
+			permission: Permission.ViewExercisePrograms,
 		},
 		{
 			title: "Store Products",
