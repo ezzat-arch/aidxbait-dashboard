@@ -10,10 +10,17 @@ const handleGetPrograms = withPermission(
 		try {
 			const supabase = await createClient();
 
-			// First, fetch all programs (excluding soft deleted)
 			const { data: programs, error: programsError } = await supabase
 				.from("programs")
-				.select("*")
+				.select(
+					`
+					*,
+					joints (
+						id,
+						name
+					)
+				`
+				)
 				.eq("soft_deleted", false)
 				.order("created_at", { ascending: false });
 
@@ -104,9 +111,30 @@ const handleCreateProgram = withPermission(
 				);
 			}
 
+			if (!body.joint_id || typeof body.joint_id !== "number") {
+				return NextResponse.json(
+					{ error: "Joint ID is required and must be a number" },
+					{ status: 400 }
+				);
+			}
+
 			if (body.price < 0) {
 				return NextResponse.json(
 					{ error: "Price must be a positive number" },
+					{ status: 400 }
+				);
+			}
+
+			// Verify that the joint exists
+			const { data: joint, error: jointError } = await supabase
+				.from("joints")
+				.select("id")
+				.eq("id", body.joint_id)
+				.single();
+
+			if (jointError || !joint) {
+				return NextResponse.json(
+					{ error: "Invalid joint ID" },
 					{ status: 400 }
 				);
 			}
@@ -119,6 +147,7 @@ const handleCreateProgram = withPermission(
 					title_ar: body.title_ar.trim(),
 					description: body.description?.trim() || null,
 					description_ar: body.description_ar?.trim() || null,
+					joint_id: body.joint_id,
 					price: body.price,
 					soft_deleted: false,
 					created_at: new Date().toISOString(),
@@ -134,6 +163,13 @@ const handleCreateProgram = withPermission(
 					return NextResponse.json(
 						{ error: "A program with this title already exists" },
 						{ status: 409 }
+					);
+				}
+
+				if (error.code === "23503") {
+					return NextResponse.json(
+						{ error: "Invalid joint ID reference" },
+						{ status: 400 }
 					);
 				}
 

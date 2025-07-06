@@ -23,6 +23,7 @@ export interface Program {
 	title_ar: string;
 	description?: string;
 	description_ar?: string;
+	joint_id: number;
 	price: number;
 	soft_deleted: boolean;
 	created_at: string;
@@ -43,6 +44,10 @@ export interface ProgramWithVideos extends Program {
 	videos: VideoWithProgramDetails[];
 	video_count?: number;
 	total_duration?: number; // in seconds
+	joints?: {
+		id: number;
+		name: string;
+	};
 }
 
 export interface VideoWithProgramDetails extends Video {
@@ -79,6 +84,7 @@ export interface CreateProgramData {
 	title_ar: string;
 	description?: string;
 	description_ar?: string;
+	joint_id: number;
 	price: number;
 }
 

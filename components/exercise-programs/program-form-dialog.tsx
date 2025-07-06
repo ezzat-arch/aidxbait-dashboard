@@ -14,11 +14,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import type {
 	CreateProgramData,
 	UpdateProgramData,
 	Program,
 } from "@/types/exercise-program-types";
+import type { Joint } from "@/types/store-types";
 
 interface ProgramFormDialogProps {
 	open: boolean;
@@ -46,10 +54,34 @@ export function ProgramFormDialog({
 		title_ar: "",
 		description: "",
 		description_ar: "",
+		joint_id: 0,
 		price: 0,
 	});
 
+	const [joints, setJoints] = useState<Joint[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [jointsLoading, setJointsLoading] = useState(false);
+
+	// Fetch joints when component mounts
+	useEffect(() => {
+		if (open) {
+			fetchJoints();
+		}
+	}, [open]);
+
+	const fetchJoints = async () => {
+		try {
+			setJointsLoading(true);
+			const response = await fetch("/api/protected/store/joints");
+			if (!response.ok) throw new Error("Failed to fetch joints");
+			const result = await response.json();
+			setJoints(result.data);
+		} catch (error) {
+			console.error("Failed to fetch joints:", error);
+		} finally {
+			setJointsLoading(false);
+		}
+	};
 
 	useEffect(() => {
 		if (defaultValues) {
@@ -58,6 +90,7 @@ export function ProgramFormDialog({
 				title_ar: defaultValues.title_ar || "",
 				description: defaultValues.description || "",
 				description_ar: defaultValues.description_ar || "",
+				joint_id: defaultValues.joint_id || 0,
 				price: defaultValues.price || 0,
 			});
 		} else {
@@ -66,6 +99,7 @@ export function ProgramFormDialog({
 				title_ar: "",
 				description: "",
 				description_ar: "",
+				joint_id: 0,
 				price: 0,
 			});
 		}
@@ -83,6 +117,10 @@ export function ProgramFormDialog({
 			return;
 		}
 
+		if (!formData.joint_id) {
+			return;
+		}
+
 		try {
 			setLoading(true);
 
@@ -91,6 +129,7 @@ export function ProgramFormDialog({
 				title_ar: formData.title_ar.trim(),
 				description: formData.description.trim() || undefined,
 				description_ar: formData.description_ar.trim() || undefined,
+				joint_id: formData.joint_id,
 				price: formData.price,
 			});
 		} finally {
@@ -106,7 +145,10 @@ export function ProgramFormDialog({
 
 	const isFormValid = () => {
 		return (
-			formData.title.trim() && formData.title_ar.trim() && formData.price >= 0
+			formData.title.trim() &&
+			formData.title_ar.trim() &&
+			formData.price >= 0 &&
+			formData.joint_id > 0
 		);
 	};
 
@@ -196,6 +238,35 @@ export function ProgramFormDialog({
 							</div>
 						</TabsContent>
 					</Tabs>
+
+					{/* Joint Selection */}
+					<div className="space-y-2">
+						<Label htmlFor="joint">Joint *</Label>
+						<Select
+							value={formData.joint_id > 0 ? formData.joint_id.toString() : ""}
+							onValueChange={(value) =>
+								setFormData((prev) => ({
+									...prev,
+									joint_id: parseInt(value) || 0,
+								}))
+							}
+							disabled={loading || jointsLoading}
+						>
+							<SelectTrigger>
+								<SelectValue placeholder="Select a joint" />
+							</SelectTrigger>
+							<SelectContent>
+								{joints.map((joint) => (
+									<SelectItem key={joint.id} value={joint.id.toString()}>
+										{joint.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						{jointsLoading && (
+							<p className="text-sm text-muted-foreground">Loading joints...</p>
+						)}
+					</div>
 
 					{/* Price Input */}
 					<div className="space-y-2">

@@ -274,6 +274,7 @@ export function ProgramsTab() {
 								<TableHeader>
 									<TableRow>
 										<TableHead>Title</TableHead>
+										<TableHead>Joint</TableHead>
 										<TableHead>Price</TableHead>
 										<TableHead>Videos</TableHead>
 										<TableHead>Duration</TableHead>
@@ -292,6 +293,11 @@ export function ProgramsTab() {
 													>
 														{program.title_ar}
 													</div>
+												</div>
+											</TableCell>
+											<TableCell>
+												<div className="text-sm">
+													{program.joints?.name || "N/A"}
 												</div>
 											</TableCell>
 											<TableCell>

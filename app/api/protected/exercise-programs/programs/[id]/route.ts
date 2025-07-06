@@ -24,6 +24,10 @@ const handleGetProgram = withPermission(
 				.select(
 					`
 					*,
+					joints (
+						id,
+						name
+					),
 					program_videos(
 						sort_order,
 						videos(*, soft_deleted)
@@ -104,6 +108,30 @@ const handleUpdateProgram = withPermission(
 				);
 			}
 
+			// Validate joint_id if provided
+			if (body.joint_id !== undefined) {
+				if (typeof body.joint_id !== "number") {
+					return NextResponse.json(
+						{ error: "Joint ID must be a number" },
+						{ status: 400 }
+					);
+				}
+
+				// Verify that the joint exists
+				const { data: joint, error: jointError } = await supabase
+					.from("joints")
+					.select("id")
+					.eq("id", body.joint_id)
+					.single();
+
+				if (jointError || !joint) {
+					return NextResponse.json(
+						{ error: "Invalid joint ID" },
+						{ status: 400 }
+					);
+				}
+			}
+
 			// Check if program exists and is not soft deleted
 			const { data: existingProgram, error: fetchError } = await supabase
 				.from("programs")
@@ -143,6 +171,9 @@ const handleUpdateProgram = withPermission(
 			if (body.description_ar !== undefined) {
 				updateData.description_ar = body.description_ar?.trim() || null;
 			}
+			if (body.joint_id !== undefined) {
+				updateData.joint_id = body.joint_id;
+			}
 			if (body.price !== undefined) {
 				updateData.price = body.price;
 			}
@@ -157,6 +188,14 @@ const handleUpdateProgram = withPermission(
 
 			if (error) {
 				console.error("Database error:", error);
+
+				if (error.code === "23503") {
+					return NextResponse.json(
+						{ error: "Invalid joint ID reference" },
+						{ status: 400 }
+					);
+				}
+
 				return NextResponse.json(
 					{ error: "Failed to update program" },
 					{ status: 500 }

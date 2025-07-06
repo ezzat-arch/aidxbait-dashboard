@@ -30,6 +30,12 @@ export enum Permission {
 	UpdateExercisePrograms = "exercise-programs:update",
 	DeleteExercisePrograms = "exercise-programs:delete",
 	ManageVideos = "exercise-programs:manage-videos",
+
+	// Program Subscriptions permissions
+	ViewSubscriptions = "subscriptions:view",
+	CreateSubscriptions = "subscriptions:create",
+	UpdateSubscriptions = "subscriptions:update",
+	CancelSubscriptions = "subscriptions:cancel",
 }
 
 // Define role types

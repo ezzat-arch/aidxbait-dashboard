@@ -13,7 +13,7 @@ const handleGetJoints = withPermission(
 			const { data: joints, error } = await supabase
 				.from("joints")
 				.select("*")
-				.order("name");
+				.order("id");
 
 			if (error) {
 				console.error("Database error:", error);

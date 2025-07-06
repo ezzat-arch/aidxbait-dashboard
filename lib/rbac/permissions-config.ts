@@ -16,6 +16,7 @@ export const ROLE_PERMISSIONS: RolePermissions = {
 		Permission.UpdateSettings,
 		Permission.ViewAuditLogs,
 		Permission.ViewStore, // Admins can view store
+		Permission.ViewSubscriptions, // Admins can view subscriptions
 	],
 	[Role.Therapist]: [],
 	[Role.Consultant]: [],
@@ -34,6 +35,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
 	"/dashboard/audit-logs": [Permission.ViewAuditLogs],
 	"/dashboard/store": [Permission.ViewStore],
 	"/dashboard/exercise-programs": [Permission.ViewExercisePrograms],
+	"/dashboard/program-subscription": [Permission.ViewSubscriptions],
 };
 
 // Define API route permissions
@@ -69,5 +71,19 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	],
 	"DELETE /api/protected/exercise-programs/programs": [
 		Permission.DeleteExercisePrograms,
+	],
+
+	// Program Subscriptions API permissions
+	"GET /api/protected/exercise-programs/subscriptions": [
+		Permission.ViewSubscriptions,
+	],
+	"POST /api/protected/exercise-programs/subscriptions": [
+		Permission.CreateSubscriptions,
+	],
+	"PUT /api/protected/exercise-programs/subscriptions": [
+		Permission.UpdateSubscriptions,
+	],
+	"DELETE /api/protected/exercise-programs/subscriptions": [
+		Permission.CancelSubscriptions,
 	],
 };

@@ -13,6 +13,7 @@ import {
 	Shield,
 	ShoppingBag,
 	Dumbbell,
+	CalendarDays,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,36 +41,42 @@ export function DashboardSidebar() {
 			href: "/dashboard/users",
 			icon: Users,
 			permission: Permission.ViewUsers,
+			disabled: false,
 		},
 		{
 			title: "Exercise Programs",
 			href: "/dashboard/exercise-programs",
 			icon: Dumbbell,
 			permission: Permission.ViewExercisePrograms,
+			disabled: false,
+		},
+		{
+			title: "Program Subscriptions",
+			href: "/dashboard/program-subscription",
+			icon: CalendarDays,
+			permission: Permission.ViewSubscriptions,
+			disabled: false,
 		},
 		{
 			title: "Store Products",
 			href: "/dashboard/store",
 			icon: ShoppingBag,
 			permission: Permission.ViewStore,
+			disabled: true,
 		},
 		{
 			title: "Analytics",
 			href: "/dashboard/analytics",
 			icon: BarChart3,
 			permission: Permission.ViewAnalytics,
+			disabled: true,
 		},
 		{
 			title: "Settings",
 			href: "/dashboard/settings",
 			icon: Settings,
 			permission: Permission.ViewSettings,
-		},
-		{
-			title: "Admin",
-			href: "/dashboard/admin",
-			icon: Shield,
-			permission: Permission.ManageRoles,
+			disabled: true,
 		},
 	];
 
@@ -128,18 +135,30 @@ export function DashboardSidebar() {
 				<nav className="space-y-1 px-2">
 					{navItems.map((item) => (
 						<PermissionGate key={item.href} permissions={[item.permission]}>
-							<Link
-								href={item.href}
-								className={cn(
-									"flex items-center px-3 py-2 rounded-md transition-colors",
-									pathname === item.href
-										? "bg-primary text-primary-foreground"
-										: "text-muted-foreground hover:bg-muted hover:text-foreground"
-								)}
-							>
-								<item.icon size={20} />
-								{!collapsed && <span className="ml-3">{item.title}</span>}
-							</Link>
+							{item.disabled ? (
+								<div
+									className={cn(
+										"flex items-center px-3 py-2 rounded-md transition-colors",
+										"text-muted-foreground/50 cursor-not-allowed opacity-50"
+									)}
+								>
+									<item.icon size={20} />
+									{!collapsed && <span className="ml-3">{item.title}</span>}
+								</div>
+							) : (
+								<Link
+									href={item.href}
+									className={cn(
+										"flex items-center px-3 py-2 rounded-md transition-colors",
+										pathname === item.href
+											? "bg-primary text-primary-foreground"
+											: "text-muted-foreground hover:bg-muted hover:text-foreground"
+									)}
+								>
+									<item.icon size={20} />
+									{!collapsed && <span className="ml-3">{item.title}</span>}
+								</Link>
+							)}
 						</PermissionGate>
 					))}
 				</nav>
