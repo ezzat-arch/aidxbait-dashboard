@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 import type { UpdateProgramData } from "@/types/exercise-program-types";
+
+// Create Supabase client with service_role key for storage operations
+const createStorageServiceClient = () => {
+	return createServiceClient(
+		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		process.env.SUPABASE_SERVICE_ROLE_KEY!,
+		{
+			auth: {
+				autoRefreshToken: false,
+				persistSession: false,
+				detectSessionInUrl: false,
+			},
+		}
+	);
+};
 
 const handleGetProgram = withPermission(
 	[Permission.ViewExercisePrograms],
@@ -135,7 +151,7 @@ const handleUpdateProgram = withPermission(
 			// Check if program exists and is not soft deleted
 			const { data: existingProgram, error: fetchError } = await supabase
 				.from("programs")
-				.select("id")
+				.select("id, thumbnail_url")
 				.eq("id", id)
 				.eq("soft_deleted", false)
 				.single();
@@ -177,6 +193,25 @@ const handleUpdateProgram = withPermission(
 			if (body.price !== undefined) {
 				updateData.price = body.price;
 			}
+			if (body.thumbnail_url !== undefined) {
+				updateData.thumbnail_url = body.thumbnail_url.trim();
+			}
+
+			// Handle thumbnail cleanup if a new thumbnail URL is provided
+			let oldImageCleanup = null;
+			if (
+				body.thumbnail_url !== undefined &&
+				existingProgram.thumbnail_url !== body.thumbnail_url
+			) {
+				// Extract the filename from the old thumbnail URL to delete it later
+				const oldUrl = existingProgram.thumbnail_url;
+				if (oldUrl && oldUrl.includes("program-thumbnails/")) {
+					const urlParts = oldUrl.split("program-thumbnails/");
+					if (urlParts.length > 1) {
+						oldImageCleanup = urlParts[1].split("?")[0]; // Remove query params if any
+					}
+				}
+			}
 
 			// Update program
 			const { data: program, error } = await supabase
@@ -200,6 +235,19 @@ const handleUpdateProgram = withPermission(
 					{ error: "Failed to update program" },
 					{ status: 500 }
 				);
+			}
+
+			// Clean up old thumbnail if needed
+			if (oldImageCleanup) {
+				try {
+					const storageClient = createStorageServiceClient();
+					await storageClient.storage
+						.from("program-thumbnails")
+						.remove([oldImageCleanup]);
+				} catch (cleanupError) {
+					// Don't fail the update if cleanup fails, just log it
+					console.error("Failed to cleanup old thumbnail:", cleanupError);
+				}
 			}
 
 			return NextResponse.json({

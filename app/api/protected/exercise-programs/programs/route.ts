@@ -118,6 +118,13 @@ const handleCreateProgram = withPermission(
 				);
 			}
 
+			if (!body.thumbnail_url || typeof body.thumbnail_url !== "string") {
+				return NextResponse.json(
+					{ error: "Thumbnail URL is required" },
+					{ status: 400 }
+				);
+			}
+
 			if (body.price < 0) {
 				return NextResponse.json(
 					{ error: "Price must be a positive number" },
@@ -148,6 +155,7 @@ const handleCreateProgram = withPermission(
 					description: body.description?.trim() || null,
 					description_ar: body.description_ar?.trim() || null,
 					joint_id: body.joint_id,
+					thumbnail_url: body.thumbnail_url.trim(),
 					price: body.price,
 					soft_deleted: false,
 					created_at: new Date().toISOString(),

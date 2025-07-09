@@ -273,6 +273,7 @@ export function ProgramsTab() {
 							<Table>
 								<TableHeader>
 									<TableRow>
+										<TableHead>Thumbnail</TableHead>
 										<TableHead>Title</TableHead>
 										<TableHead>Joint</TableHead>
 										<TableHead>Price</TableHead>
@@ -284,6 +285,22 @@ export function ProgramsTab() {
 								<TableBody>
 									{programs.map((program) => (
 										<TableRow key={program.id}>
+											<TableCell>
+												<div className="w-16 h-10 rounded overflow-hidden bg-muted flex items-center justify-center">
+													{program.thumbnail_url ? (
+														<img
+															src={program.thumbnail_url}
+															alt={program.title}
+															className="w-full h-full object-cover"
+															onError={(e) => {
+																e.currentTarget.src = "/placeholder.svg";
+															}}
+														/>
+													) : (
+														<VideoIcon className="h-4 w-4 text-muted-foreground" />
+													)}
+												</div>
+											</TableCell>
 											<TableCell>
 												<div>
 													<div className="font-medium">{program.title}</div>

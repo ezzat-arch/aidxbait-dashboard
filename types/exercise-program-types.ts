@@ -24,6 +24,7 @@ export interface Program {
 	description?: string;
 	description_ar?: string;
 	joint_id: number;
+	thumbnail_url: string;
 	price: number;
 	soft_deleted: boolean;
 	created_at: string;
@@ -85,6 +86,7 @@ export interface CreateProgramData {
 	description?: string;
 	description_ar?: string;
 	joint_id: number;
+	thumbnail_url: string;
 	price: number;
 }
 

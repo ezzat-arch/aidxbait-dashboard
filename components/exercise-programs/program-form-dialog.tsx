@@ -21,6 +21,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { ImageUpload } from "@/components/ui/image-upload";
 import type {
 	CreateProgramData,
 	UpdateProgramData,
@@ -55,6 +56,7 @@ export function ProgramFormDialog({
 		description: "",
 		description_ar: "",
 		joint_id: 0,
+		thumbnail_url: "",
 		price: 0,
 	});
 
@@ -91,6 +93,7 @@ export function ProgramFormDialog({
 				description: defaultValues.description || "",
 				description_ar: defaultValues.description_ar || "",
 				joint_id: defaultValues.joint_id || 0,
+				thumbnail_url: defaultValues.thumbnail_url || "",
 				price: defaultValues.price || 0,
 			});
 		} else {
@@ -100,6 +103,7 @@ export function ProgramFormDialog({
 				description: "",
 				description_ar: "",
 				joint_id: 0,
+				thumbnail_url: "",
 				price: 0,
 			});
 		}
@@ -110,6 +114,10 @@ export function ProgramFormDialog({
 
 		// Validation
 		if (!formData.title.trim() || !formData.title_ar.trim()) {
+			return;
+		}
+
+		if (!formData.thumbnail_url.trim()) {
 			return;
 		}
 
@@ -130,6 +138,7 @@ export function ProgramFormDialog({
 				description: formData.description.trim() || undefined,
 				description_ar: formData.description_ar.trim() || undefined,
 				joint_id: formData.joint_id,
+				thumbnail_url: formData.thumbnail_url.trim(),
 				price: formData.price,
 			});
 		} finally {
@@ -147,6 +156,7 @@ export function ProgramFormDialog({
 		return (
 			formData.title.trim() &&
 			formData.title_ar.trim() &&
+			formData.thumbnail_url.trim() &&
 			formData.price >= 0 &&
 			formData.joint_id > 0
 		);
@@ -267,6 +277,19 @@ export function ProgramFormDialog({
 							<p className="text-sm text-muted-foreground">Loading joints...</p>
 						)}
 					</div>
+
+					{/* Thumbnail Upload */}
+					<ImageUpload
+						value={formData.thumbnail_url}
+						onChange={(url) =>
+							setFormData((prev) => ({ ...prev, thumbnail_url: url }))
+						}
+						uploadEndpoint="/api/protected/exercise-programs/upload-thumbnail"
+						label="Program Thumbnail"
+						description="Upload an image for the exercise program. Recommended aspect ratio: 16:9"
+						disabled={loading}
+						required
+					/>
 
 					{/* Price Input */}
 					<div className="space-y-2">
