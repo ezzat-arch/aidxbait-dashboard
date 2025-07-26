@@ -33,7 +33,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { createClient } from "@/lib/supabase/client";
 import { Upload, X, Star } from "lucide-react";
 import type {
 	ProductWithDetails,
@@ -147,7 +146,7 @@ export function ProductFormModal({
 					tags: product.tags || [],
 					joint_ids: product.joints?.map((j) => j.id) || [],
 					images:
-						product.images?.map((img) => ({
+						product.product_images?.map((img) => ({
 							url: img.image_url,
 							is_main: img.is_main,
 						})) || [],
@@ -198,21 +197,21 @@ export function ProductFormModal({
 	};
 
 	const uploadImage = async (file: File) => {
-		const supabase = createClient();
-		const fileExt = file.name.split(".").pop();
-		const fileName = `${Date.now()}.${fileExt}`;
+		const formData = new FormData();
+		formData.append("files", file);
 
-		const { data, error } = await supabase.storage
-			.from("product-images")
-			.upload(fileName, file);
+		const response = await fetch("/api/protected/store/upload-images", {
+			method: "POST",
+			body: formData,
+		});
 
-		if (error) throw error;
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(error.error || "Failed to upload image");
+		}
 
-		const {
-			data: { publicUrl },
-		} = supabase.storage.from("product-images").getPublicUrl(fileName);
-
-		return publicUrl;
+		const result = await response.json();
+		return result.data[0].url; // Return the first (and only) uploaded file URL
 	};
 
 	const handleImageUpload = async (
@@ -530,9 +529,9 @@ export function ProductFormModal({
 							</div>
 						</div>
 
-						{/* Product Options */}
+						{/* Special Labels */}
 						<div className="space-y-4">
-							<h3 className="font-semibold">Product Options</h3>
+							<h3 className="font-semibold">Special Labels</h3>
 
 							<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 								<FormField

@@ -58,11 +58,11 @@ export function DashboardSidebar() {
 			disabled: false,
 		},
 		{
-			title: "Store Products",
+			title: "Store",
 			href: "/dashboard/store",
 			icon: ShoppingBag,
 			permission: Permission.ViewStore,
-			disabled: true,
+			disabled: false,
 		},
 		{
 			title: "Analytics",

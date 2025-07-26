@@ -32,6 +32,13 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+} from "@/components/ui/sheet";
+import {
 	Card,
 	CardContent,
 	CardDescription,
@@ -56,9 +63,10 @@ import { toast, useToast } from "@/components/ui/use-toast";
 import { PermissionGate } from "@/components/rbac/permission-gate";
 import { Permission } from "@/types/permission-types";
 import { DeleteConfirmDialog } from "@/components/store/delete-confirm-dialog";
-import { createClient } from "@/lib/supabase/client";
 import type {
 	ProductWithCategory,
+	ProductWithDetails,
+	ProductImage,
 	Category,
 	Joint,
 	Currency,
@@ -75,6 +83,10 @@ export function ProductsTab() {
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [showDetailsPanel, setShowDetailsPanel] = useState(false);
+	const [productDetails, setProductDetails] =
+		useState<ProductWithDetails | null>(null);
+	const [detailsLoading, setDetailsLoading] = useState(false);
 	const [formLoading, setFormLoading] = useState(false);
 	const [uploading, setUploading] = useState(false);
 
@@ -145,6 +157,26 @@ export function ProductsTab() {
 			}
 		} catch (error) {
 			console.error("Failed to fetch joints:", error);
+		}
+	};
+
+	const fetchProductDetails = async (productId: number) => {
+		try {
+			setDetailsLoading(true);
+			const response = await fetch(
+				`/api/protected/store/products/${productId}`
+			);
+			if (!response.ok) throw new Error("Failed to fetch product details");
+			const result = await response.json();
+			setProductDetails(result.data);
+		} catch (error) {
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: "Failed to load product details",
+			});
+		} finally {
+			setDetailsLoading(false);
 		}
 	};
 
@@ -290,21 +322,21 @@ export function ProductsTab() {
 	};
 
 	const uploadImage = async (file: File) => {
-		const supabase = createClient();
-		const fileExt = file.name.split(".").pop();
-		const fileName = `${Date.now()}.${fileExt}`;
+		const formData = new FormData();
+		formData.append("files", file);
 
-		const { data, error } = await supabase.storage
-			.from("product-images")
-			.upload(fileName, file);
+		const response = await fetch("/api/protected/store/upload-images", {
+			method: "POST",
+			body: formData,
+		});
 
-		if (error) throw error;
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(error.error || "Failed to upload image");
+		}
 
-		const {
-			data: { publicUrl },
-		} = supabase.storage.from("product-images").getPublicUrl(fileName);
-
-		return publicUrl;
+		const result = await response.json();
+		return result.data[0].url; // Return the first (and only) uploaded file URL
 	};
 
 	const handleImageUpload = async (
@@ -382,26 +414,71 @@ export function ProductsTab() {
 		setShowCreateModal(true);
 	};
 
-	const openEditModal = (product: ProductWithCategory) => {
+	const openEditModal = async (product: ProductWithCategory) => {
 		setSelectedProduct(product);
-		setFormData({
-			name: product.name,
-			description: product.description || "",
-			price: product.price,
-			discounted_price: product.discounted_price || 0,
-			currency: product.currency,
-			stock: product.stock,
-			category_id: product.category_id,
-			is_best_seller: product.is_best_seller,
-			is_featured: product.is_featured,
-			is_available: product.is_available,
-			is_for_rent: product.is_for_rent,
-			rent_term: product.rent_term || "",
-			tags: product.tags || [],
-			joint_ids: [], // TODO: populate from product.joints when available
-			images: [], // TODO: populate from product.images when available
-		});
+
+		try {
+			// Fetch full product details including images and joints
+			const response = await fetch(
+				`/api/protected/store/products/${product.id}`
+			);
+			if (!response.ok) throw new Error("Failed to fetch product details");
+			const result = await response.json();
+			const fullProduct = result.data;
+
+			setFormData({
+				name: fullProduct.name,
+				description: fullProduct.description || "",
+				price: fullProduct.price,
+				discounted_price: fullProduct.discounted_price || 0,
+				currency: fullProduct.currency,
+				stock: fullProduct.stock,
+				category_id: fullProduct.category_id,
+				is_best_seller: fullProduct.is_best_seller,
+				is_featured: fullProduct.is_featured,
+				is_available: fullProduct.is_available,
+				is_for_rent: fullProduct.is_for_rent,
+				rent_term: fullProduct.rent_term || "",
+				tags: fullProduct.tags || [],
+				joint_ids: fullProduct.joints?.map((j: any) => j.id) || [],
+				images:
+					fullProduct.product_images?.map((img: any) => ({
+						url: img.image_url,
+						is_main: img.is_main,
+					})) || [],
+			});
+		} catch (error) {
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: "Failed to load product details for editing",
+			});
+			// Fallback to basic product data if fetch fails
+			setFormData({
+				name: product.name,
+				description: product.description || "",
+				price: product.price,
+				discounted_price: product.discounted_price || 0,
+				currency: product.currency,
+				stock: product.stock,
+				category_id: product.category_id,
+				is_best_seller: product.is_best_seller,
+				is_featured: product.is_featured,
+				is_available: product.is_available,
+				is_for_rent: product.is_for_rent,
+				rent_term: product.rent_term || "",
+				tags: product.tags || [],
+				joint_ids: [],
+				images: [],
+			});
+		}
+
 		setShowEditModal(true);
+	};
+
+	const openDetailsPanel = async (product: ProductWithCategory) => {
+		setShowDetailsPanel(true);
+		await fetchProductDetails(product.id);
 	};
 
 	const formatPrice = (price: number, currency: string) => {
@@ -573,9 +650,9 @@ export function ProductsTab() {
 				</div>
 			</div>
 
-			{/* Product Options */}
+			{/* Special Labels */}
 			<div className="space-y-4">
-				<h3 className="font-semibold">Product Options</h3>
+				<h3 className="font-semibold">Special Labels</h3>
 
 				<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 					<div className="flex items-center space-x-2">
@@ -853,7 +930,7 @@ export function ProductsTab() {
 								<TableRow key={`loading-${index}`}>
 									<TableCell>
 										<div className="flex items-center space-x-3">
-											<div className="h-10 w-10 bg-muted animate-pulse rounded"></div>
+											<div className="h-10 w-10 bg-muted animate-pulse rounded overflow-hidden flex-shrink-0"></div>
 											<div className="space-y-2">
 												<div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
 												<div className="h-3 w-32 bg-muted animate-pulse rounded"></div>
@@ -882,16 +959,30 @@ export function ProductsTab() {
 								<TableRow key={product.id}>
 									<TableCell>
 										<div className="flex items-center space-x-3">
-											<div className="h-10 w-10 bg-muted rounded flex items-center justify-center">
-												<Package className="h-5 w-5 text-muted-foreground" />
+											<div className="h-10 w-10 rounded overflow-hidden flex-shrink-0">
+												{(() => {
+													const mainImage = product.product_images?.find(
+														(img) => img.is_main
+													);
+													const anyImage = product.product_images?.[0];
+													const imageUrl =
+														mainImage?.image_url || anyImage?.image_url;
+
+													return imageUrl ? (
+														<img
+															src={imageUrl}
+															alt={product.name}
+															className="h-full w-full object-cover"
+														/>
+													) : (
+														<div className="h-full w-full bg-muted flex items-center justify-center">
+															<Package className="h-5 w-5 text-muted-foreground" />
+														</div>
+													);
+												})()}
 											</div>
 											<div>
-												<div className="font-medium flex items-center gap-2">
-													{product.name}
-													{product.is_best_seller && (
-														<Star className="h-3 w-3 text-yellow-500 fill-current" />
-													)}
-												</div>
+												<div className="font-medium">{product.name}</div>
 												<div className="text-sm text-muted-foreground truncate max-w-[200px]">
 													{product.description || "No description"}
 												</div>
@@ -966,9 +1057,7 @@ export function ProductsTab() {
 												</DropdownMenuTrigger>
 												<DropdownMenuContent align="end">
 													<DropdownMenuItem
-														onClick={() => {
-															// View details logic
-														}}
+														onClick={() => openDetailsPanel(product)}
 													>
 														<Eye className="h-4 w-4 mr-2" />
 														View Details
@@ -1049,6 +1138,396 @@ export function ProductsTab() {
 				title="Delete Product"
 				description={`Are you sure you want to delete "${selectedProduct?.name}"? This action cannot be undone.`}
 			/>
+
+			{/* Product Details Panel */}
+			<Sheet open={showDetailsPanel} onOpenChange={setShowDetailsPanel}>
+				<SheetContent className="w-full sm:w-[40%] sm:max-w-none overflow-y-auto">
+					<SheetHeader>
+						<SheetTitle>Product Details</SheetTitle>
+						<SheetDescription>
+							Complete information about the selected product
+						</SheetDescription>
+					</SheetHeader>
+
+					{detailsLoading ? (
+						<div className="space-y-6 mt-6">
+							<div className="space-y-4">
+								<div className="h-4 bg-muted animate-pulse rounded w-1/2"></div>
+								<div className="h-8 bg-muted animate-pulse rounded"></div>
+								<div className="h-20 bg-muted animate-pulse rounded"></div>
+							</div>
+						</div>
+					) : productDetails ? (
+						<div className="space-y-8 mt-6">
+							{/* Product Images */}
+							<div className="space-y-4">
+								<h3 className="font-semibold text-xl text-foreground">
+									Images
+								</h3>
+								{productDetails.product_images &&
+								Array.isArray(productDetails.product_images) &&
+								productDetails.product_images.length > 0 ? (
+									<div className="grid grid-cols-2 gap-4">
+										{productDetails.product_images.map(
+											(image: ProductImage, index: number) => (
+												<div
+													key={image.id}
+													className={`relative rounded-lg overflow-hidden ${
+														image.is_main
+															? "ring-2 ring-blue-500 ring-offset-2"
+															: ""
+													}`}
+												>
+													<img
+														src={image.image_url}
+														alt={`${productDetails.name} ${index + 1}`}
+														className="w-full h-36 object-cover border border-border"
+													/>
+													{image.is_main && (
+														<Badge className="absolute top-2 left-2 text-xs bg-blue-600 text-white shadow-lg">
+															⭐ Main
+														</Badge>
+													)}
+												</div>
+											)
+										)}
+									</div>
+								) : (
+									<div className="bg-muted/30 p-6 rounded-lg text-center border border-dashed">
+										<div className="text-sm text-muted-foreground mb-2">
+											No images uploaded for this product
+										</div>
+										<div className="text-xs text-muted-foreground">
+											Images can be added when creating or editing the product
+										</div>
+									</div>
+								)}
+							</div>
+
+							{/* Information */}
+							<div className="space-y-5">
+								<h3 className="font-semibold text-xl text-foreground">
+									Information
+								</h3>
+								<div className="space-y-6">
+									<div className="grid grid-cols-1 gap-1">
+										<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+											Product
+										</label>
+										<div className="flex items-baseline gap-3">
+											<p className="text-xs font-mono text-muted-foreground bg-muted/30 px-2 py-1 rounded">
+												ID: {productDetails.id}
+											</p>
+											<p className="text-2xl font-bold text-foreground">
+												{productDetails.name}
+											</p>
+										</div>
+									</div>
+
+									<div className="grid grid-cols-1 gap-1">
+										<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+											Description
+										</label>
+										{productDetails.description ? (
+											<p className="text-sm leading-relaxed text-foreground bg-muted/20 p-3 rounded-md">
+												{productDetails.description}
+											</p>
+										) : (
+											<p className="text-sm text-muted-foreground italic bg-muted/30 p-3 rounded-md">
+												No description provided
+											</p>
+										)}
+									</div>
+
+									<div className="grid grid-cols-1 gap-1">
+										<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+											Category
+										</label>
+										<div>
+											<Badge variant="outline" className="text-sm px-3 py-1">
+												{productDetails.category.name}
+											</Badge>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Pricing Information */}
+							<div className="space-y-5">
+								<h3 className="font-semibold text-xl text-foreground">
+									Pricing
+								</h3>
+								<div className="space-y-6">
+									<div className="grid grid-cols-2 gap-6">
+										<div className="grid grid-cols-1 gap-1">
+											<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+												Price
+											</label>
+											<p className="text-xl font-bold text-foreground">
+												{formatPrice(
+													productDetails.price,
+													productDetails.currency
+												)}
+											</p>
+										</div>
+
+										<div className="grid grid-cols-1 gap-1">
+											<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+												Discounted Price
+											</label>
+											{productDetails.discounted_price ? (
+												<p className="text-xl font-bold text-green-600">
+													{formatPrice(
+														productDetails.discounted_price,
+														productDetails.currency
+													)}
+												</p>
+											) : (
+												<p className="text-sm text-muted-foreground italic">
+													No discount applied
+												</p>
+											)}
+										</div>
+									</div>
+
+									<div className="grid grid-cols-1 gap-1">
+										<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+											Rent Term
+										</label>
+										{productDetails.is_for_rent && productDetails.rent_term ? (
+											<div>
+												<Badge variant="outline" className="text-sm px-3 py-1">
+													{productDetails.rent_term
+														.replace("_", " ")
+														.replace(/\b\w/g, (l) => l.toUpperCase())}
+												</Badge>
+											</div>
+										) : (
+											<p className="text-sm text-muted-foreground italic">
+												{productDetails.is_for_rent
+													? "Rent term not specified"
+													: "Not available for rent"}
+											</p>
+										)}
+									</div>
+								</div>
+							</div>
+
+							{/* Inventory & Status */}
+							<div className="space-y-5">
+								<h3 className="font-semibold text-xl text-foreground">
+									Status & Inventory
+								</h3>
+								<div className="space-y-6">
+									<div className="grid grid-cols-2 gap-6">
+										<div className="grid grid-cols-1 gap-1">
+											<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+												Stock
+											</label>
+											<p
+												className={`text-lg font-bold ${
+													productDetails.stock === 0
+														? "text-destructive"
+														: productDetails.stock < 10
+														? "text-yellow-600"
+														: "text-green-600"
+												}`}
+											>
+												{productDetails.stock} units
+											</p>
+										</div>
+
+										<div className="grid grid-cols-1 gap-1">
+											<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+												Availability
+											</label>
+											<div>
+												<Badge
+													variant={
+														productDetails.is_available
+															? "default"
+															: "secondary"
+													}
+													className={`text-sm px-3 py-1 ${
+														productDetails.is_available
+															? "bg-green-500/20 text-green-600"
+															: "bg-red-500/20 text-red-600"
+													}`}
+												>
+													{productDetails.is_available
+														? "Available"
+														: "Unavailable"}
+												</Badge>
+											</div>
+										</div>
+									</div>
+
+									<div className="grid grid-cols-1 gap-1">
+										<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+											Special Labels
+										</label>
+										<div className="flex flex-wrap gap-2">
+											{productDetails.is_featured && (
+												<Badge
+													variant="outline"
+													className="text-blue-600 border-blue-600 px-3 py-1"
+												>
+													Featured
+												</Badge>
+											)}
+											{productDetails.is_best_seller && (
+												<Badge
+													variant="outline"
+													className="text-yellow-600 border-yellow-600 px-3 py-1"
+												>
+													<Star className="h-3 w-3 mr-1 fill-current" />
+													Best Seller
+												</Badge>
+											)}
+											{productDetails.is_for_rent && (
+												<Badge
+													variant="outline"
+													className="text-purple-600 border-purple-600 px-3 py-1"
+												>
+													For Rent
+												</Badge>
+											)}
+											{!productDetails.is_featured &&
+												!productDetails.is_best_seller &&
+												!productDetails.is_for_rent && (
+													<p className="text-sm text-muted-foreground italic">
+														No special labels
+													</p>
+												)}
+										</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Reviews */}
+							<div className="space-y-5">
+								<h3 className="font-semibold text-xl text-foreground">
+									Reviews
+								</h3>
+								{(productDetails.review_count || 0) > 0 ? (
+									<div className="grid grid-cols-2 gap-6">
+										<div className="grid grid-cols-1 gap-1">
+											<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+												Average Rating
+											</label>
+											<div className="flex items-center gap-3">
+												<span className="text-3xl font-bold text-foreground">
+													{productDetails.average_rating?.toFixed(1) || "0.0"}
+												</span>
+												<div className="flex">
+													{[1, 2, 3, 4, 5].map((star) => (
+														<Star
+															key={star}
+															className={`h-5 w-5 ${
+																star <=
+																Math.round(productDetails.average_rating || 0)
+																	? "text-yellow-500 fill-current"
+																	: "text-gray-300"
+															}`}
+														/>
+													))}
+												</div>
+											</div>
+										</div>
+										<div className="grid grid-cols-1 gap-1">
+											<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+												Total Reviews
+											</label>
+											<p className="text-xl font-bold text-foreground">
+												{productDetails.review_count} reviews
+											</p>
+										</div>
+									</div>
+								) : (
+									<div className="text-sm text-muted-foreground italic bg-muted/30 p-6 rounded-lg text-center border border-dashed">
+										No reviews yet
+									</div>
+								)}
+							</div>
+
+							{/* Body Joints */}
+							<div className="space-y-4">
+								<h3 className="font-semibold text-xl text-foreground">
+									Related Body Joints
+								</h3>
+								{productDetails.joints && productDetails.joints.length > 0 ? (
+									<div className="flex flex-wrap gap-3">
+										{productDetails.joints.map((joint) => (
+											<Badge
+												key={joint.id}
+												variant="outline"
+												className="text-sm px-3 py-1 bg-blue-50 text-blue-700 border-blue-200"
+											>
+												{joint.name}
+											</Badge>
+										))}
+									</div>
+								) : (
+									<div className="text-sm text-muted-foreground italic bg-muted/30 p-6 rounded-lg text-center border border-dashed">
+										No body joints associated
+									</div>
+								)}
+							</div>
+
+							{/* Tags */}
+							<div className="space-y-4">
+								<h3 className="font-semibold text-xl text-foreground">Tags</h3>
+								{productDetails.tags && productDetails.tags.length > 0 ? (
+									<div className="flex flex-wrap gap-3">
+										{productDetails.tags.map((tag, index) => (
+											<Badge
+												key={index}
+												variant="secondary"
+												className="text-sm px-3 py-1 bg-gray-100 text-gray-700"
+											>
+												{tag}
+											</Badge>
+										))}
+									</div>
+								) : (
+									<div className="text-sm text-muted-foreground italic bg-muted/30 p-6 rounded-lg text-center border border-dashed">
+										No tags added
+									</div>
+								)}
+							</div>
+
+							{/* Timestamps */}
+							<div className="space-y-5 border-t border-border pt-6">
+								<h3 className="font-semibold text-xl text-foreground">
+									Timestamps
+								</h3>
+								<div className="grid grid-cols-1 gap-4">
+									<div className="grid grid-cols-1 gap-1">
+										<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+											Created
+										</label>
+										<p className="text-sm font-mono bg-muted/30 px-3 py-2 rounded-md">
+											{new Date(productDetails.created_at).toLocaleString()}
+										</p>
+									</div>
+									<div className="grid grid-cols-1 gap-1">
+										<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+											Last Updated
+										</label>
+										<p className="text-sm font-mono bg-muted/30 px-3 py-2 rounded-md">
+											{new Date(productDetails.updated_at).toLocaleString()}
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					) : (
+						<div className="mt-6 text-center text-muted-foreground">
+							No product details available
+						</div>
+					)}
+				</SheetContent>
+			</Sheet>
 		</Card>
 	);
 }

@@ -72,6 +72,7 @@ const handleImageUpload = withPermission(
 					.upload(fileName, bytes, {
 						cacheControl: "3600",
 						upsert: false,
+						contentType: file.type,
 					});
 
 				if (error) {

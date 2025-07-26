@@ -48,6 +48,7 @@ export interface Product {
 
 export interface ProductWithCategory extends Product {
 	category: Category;
+	product_images?: ProductImage[];
 }
 
 export interface ProductImage {
@@ -88,7 +89,7 @@ export interface ProductReview {
 // Extended types for UI components
 export interface ProductWithDetails extends Product {
 	category: Category;
-	images: ProductImage[];
+	product_images: ProductImage[];
 	joints: Joint[];
 	reviews: ProductReview[];
 	average_rating?: number;

@@ -9,19 +9,41 @@ const handleGetProducts = withPermission(
 		try {
 			const supabase = await createClient();
 
-			// Fetch products with categories, images, joints, and review aggregations (excluding soft deleted)
+			// Fetch products with all related data
 			const { data: products, error } = await supabase
 				.from("products")
 				.select(
 					`
 					*,
-					category:categories(*),
-					product_images(*),
-					product_joints(joint_id, joints(id, name))
+					categories(*)
 				`
 				)
 				.eq("soft_deleted", false)
 				.order("created_at", { ascending: false });
+
+			if (products && products.length > 0) {
+				// Get images and joints for each product
+				for (let product of products) {
+					const { data: images } = await supabase
+						.from("product_images")
+						.select("*")
+						.eq("product_id", product.id);
+
+					const { data: joints } = await supabase
+						.from("product_joints")
+						.select("joint_id, joints(id, name)")
+						.eq("product_id", product.id);
+
+					product.product_images = images || [];
+					product.product_joints = joints || [];
+				}
+			}
+
+			console.log("Products query result:", {
+				products: products,
+				error: error,
+				count: products?.length,
+			});
 
 			if (error) {
 				console.error("Database error:", error);
@@ -49,6 +71,7 @@ const handleGetProducts = withPermission(
 
 					return {
 						...product,
+						category: product.categories, // Map categories to category for consistency
 						review_count: reviewCount,
 						average_rating: Math.round(averageRating * 10) / 10,
 						joints: product.product_joints?.map((pj: any) => pj.joints) || [],
