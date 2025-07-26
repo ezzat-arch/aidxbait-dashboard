@@ -10,28 +10,52 @@ The Admin Dashboard is the **central back-office** tool that empowers AidXBait's
 
 The vision is a **single pane of glass** for non-technical staff to run the day-to-day business of AidXBait efficiently and securely.
 
-## 2. Functional Scope (MVP)
+## 2. Functional Scope (Current State)
 
-1. User Management
-   • List, search & filter patients, therapists, and doctors.
-   • Impersonate or reset user access when required.
-2. Store Management
-   • CRUD for **Products**, **Categories**, **Joints/Conditions** (taxonomy for filtering).
-   • Bulk CSV/Excel import & image uploads to Supabase Storage.
-3. Order & Payment Tracking
-   • View order details, payment status, and shipment tracking.
-   • Refund or cancel orders with proper permissions.
-4. Content & Program Library
-   • Manage exercise programs, video assets, and documentation.
-   • Version control & publication scheduling.
-5. RBAC & Permissions
-   • Granular permission matrix with **superuser**, **admin**, **editor**, **viewer** roles.
-   • UI gates hide or disable unauthorized actions.
-6. Analytics Dashboard
-   • Key KPIs: active users, completed sessions, best-selling products, revenue.
-   • Export data (CSV, PDF) for offline reporting.
-7. Audit Trail
-   • Immutable log of critical actions (delete, refund, role change) for compliance.
+### ✅ **Implemented Features**
+
+1. **User Management**
+   • CRUD operations for users with role-based permissions.
+   • Users dashboard with table, filters & search functionality.
+   • User role management and permission gates.
+
+2. **Store Management**
+   • Complete CRUD for **Products**, **Categories**, **Joints/Conditions**.
+   • Reviews management system.
+   • Bulk image upload to Supabase Storage.
+   • React tabs UI for all store entities.
+
+3. **Exercise Programs & Videos**
+   • Full lifecycle management of exercise programs and video content.
+   • Program-video relationship management.
+   • Subscription system with automated expiration.
+   • Rich admin UI with drag-and-drop video ordering.
+
+4. **RBAC & Permissions**
+   • Granular permission matrix with comprehensive role definitions.
+   • UI gates that hide/disable unauthorized actions.
+   • API route protection with `withAuth()` and `withPermission()` HOFs.
+
+5. **Authentication & Security**
+   • Supabase Auth integration with JWT verification.
+   • Server-side client usage in all API routes.
+   • Middleware-based route protection.
+
+### 🚧 **In Progress / Next Priority**
+
+6. **Store Orders Management**
+   • Order tracking, payment status, and shipment management.
+   • Refund and cancellation workflows.
+   • Revenue analytics and KPI dashboards.
+
+7. **Analytics & Reporting**
+   • Cross-feature analytics dashboard.
+   • Real-time metrics and charts.
+   • Export capabilities (CSV, PDF).
+
+8. **Audit Trail & Compliance**
+   • Immutable log of critical actions for compliance.
+   • UI viewer with filtering capabilities.
 
 ## 3. Target Platforms
 
@@ -63,30 +87,39 @@ The vision is a **single pane of glass** for non-technical staff to run the day-
 • Strict type definitions live in `types/` and are shared across front & back.
 • Unit tests co-located with code (`*.test.ts`) and run in CI.
 
-## 6. Data Model (draft)
+## 6. Data Model (current)
 
 • **User** (role, permissions, profile).
 • **Product** (id, name, category_id, joint_id, price, stock, images, soft_deleted).
 • **Category** (id, name, icon).
 • **Joint** (id, name, description).
-• **Order** (id, user_id, total, status, payment_id, created_at).
+• **Program** (id, title, description, joint_id, price, thumbnail_url, soft_deleted).
+• **Video** (id, title, duration, url, program_id, soft_deleted).
+• **ProgramSubscription** (id, user_id, program_id, status, expires_at).
 • **Review** (id, product_id, user_id, rating, comment, soft_deleted).
 • **Permission** (code, description) & **Role** (name, permission_codes[]).
-• **AuditLog** (id, actor_id, action, target_table, target_id, meta, created_at).
 
 _All tables have `soft_deleted`, `created_at`, `updated_at` where applicable._
 
 ## 7. Roadmap (next 3 sprints)
 
-1. **Sprint 1 – Core CRUD & RBAC**
-   • Implement Users, Products, Categories, Joints, Reviews endpoints & UI.
-   • Integrate Supabase Auth and permission gates.
-2. **Sprint 2 – Orders & Analytics**
-   • Orders dashboard, refund flow, revenue charts.
-   • First version of KPI widgets using Supabase Realtime subscriptions.
-3. **Sprint 3 – Bulk Ops & Audit Trail**
-   • CSV import/export, bulk image uploader with progress feedback.
-   • Persistent AuditLog with UI viewer & filters.
+1. **Sprint 1 – Store Orders System** _(Current Priority)_
+   • Implement `orders` table schema and relationships.
+   • Build Orders dashboard page (`/dashboard/store/orders`).
+   • Create order management API endpoints with full CRUD operations.
+   • Add payment integration and refund workflows.
+
+2. **Sprint 2 – Analytics & Reporting**
+   • Cross-feature analytics dashboard with KPI widgets.
+   • Real-time charts using Supabase Realtime subscriptions.
+   • Export capabilities for orders, users, and program analytics.
+   • Revenue tracking and forecasting tools.
+
+3. **Sprint 3 – Advanced Features & Audit Trail**
+   • Comprehensive audit logging system.
+   • Advanced bulk operations for all entities.
+   • User activity monitoring and impersonation features.
+   • Performance optimizations and caching strategies.
 
 ## 8. Risks & Mitigations
 
@@ -106,4 +139,4 @@ _All tables have `soft_deleted`, `created_at`, `updated_at` where applicable._
 
 ---
 
-_Last updated: 2025-07-04_
+_Last updated: 2025-01-21_

@@ -26,7 +26,7 @@
 - [x] `withAuth()` higher-order function
 - [x] `withPermission()` HOF + permission config
 - [x] Role/Permission seeding script
-- [ ] PermissionGate component coverage across pages
+- [x] PermissionGate component coverage across pages
 - [ ] Admin UI to manage Roles & Permissions
 - [ ] MFA enforcement toggle per user
 - [ ] SSO (Google Workspace) for internal staff
@@ -44,25 +44,25 @@
 - [x] Create `exercise_program_subscriptions`
 - [x] Create CRON job to expire subscriptions
 
-### 3.2 API Routes (`app/api/protected/programs/**`)
+### 3.2 API Routes (`app/api/protected/exercise-programs/**`)
 
-- [ ] List & Create programs (`route.ts`)
-- [ ] Read / Update / Delete a single program (`[id]/route.ts`)
-- [ ] Nested Videos CRUD (`[programId]/videos/**`)
-- [ ] Subscriptions CRUD (`/subscriptions/**`)
+- [x] List & Create programs (`route.ts`)
+- [x] Read / Update / Delete a single program (`[id]/route.ts`)
+- [x] Nested Videos CRUD (`[programId]/videos/**`)
+- [x] Subscriptions CRUD (`/subscriptions/**`)
 - [ ] Program analytics endpoint (`/analytics/programs/**`)
 
 ### 3.3 Storage & Media
 
-- [ ] Generate presigned upload URLs for video assets
-- [ ] Server-side video metadata extraction (duration, size)
+- [x] Generate presigned upload URLs for video assets
+- [x] Server-side video metadata extraction (duration, size)
 
 ### 3.4 Admin UI
 
-- [ ] Programs table with filters & search
-- [ ] `ProgramForm` dialog (title/description/thumbnail/price)
-- [ ] Drag-and-drop `VideoList` reorder & inline edit
-- [ ] Subscriptions tab with cancel/renew actions
+- [x] Programs table with filters & search
+- [x] `ProgramForm` dialog (title/description/thumbnail/price)
+- [x] Drag-and-drop `VideoList` reorder & inline edit
+- [x] Subscriptions tab with cancel/renew actions
 - [ ] Charts: completion %, average watch time, active subscriptions
 
 ### 3.5 Realtime & Analytics
@@ -90,17 +90,49 @@
 
 ## 5. Orders & Payments
 
+> **Goal:** Complete order management system with payment tracking and analytics.
+
+### 5.1 Schema & API Routes
+
 - [ ] `orders` table schema & FKs
-- [ ] Protected endpoints (`/orders/**`)
+- [ ] Protected endpoints (`/api/protected/store/orders/**`)
   - [ ] List/Search with filters (status, date range)
   - [ ] Refund / Cancel actions
+  - [ ] Order details endpoint
+
+### 5.2 Payment Integration
+
 - [ ] Payment status webhook handler (Supabase Function)
-- [ ] Orders dashboard page
+- [ ] Refund processing workflow
+- [ ] Payment method management
+
+### 5.3 Store Orders Dashboard
+
+- [ ] Orders dashboard page (`/dashboard/store/orders`)
+  - [ ] Orders table with filters & search
   - [ ] Order detail drawer with timeline
   - [ ] Export invoice PDF
+  - [ ] Bulk order actions (cancel, refund)
 - [ ] Revenue KPI widgets (daily / MTD / YTD)
+- [ ] Order status tracking and notifications
 
-## 6. Audit Trail & Compliance
+### 5.4 Integration & Analytics
+
+- [ ] Integration with shipping providers
+- [ ] Order analytics and reporting
+- [ ] Customer order history tracking
+
+## 6. Users Management
+
+- [x] CRUD endpoints for Users
+- [x] Users dashboard page
+- [x] User table with filters & search
+- [x] User role management
+- [ ] User activity analytics
+- [ ] User impersonation feature
+- [ ] Bulk user operations
+
+## 7. Audit Trail & Compliance
 
 - [ ] `audit_logs` table + RLS policies
 - [ ] Hook to record after each destructive action
@@ -108,7 +140,7 @@
 - [ ] Download logs CSV
 - [ ] Data retention job (purge > 1 year)
 
-## 7. Analytics & Reporting (Cross-Feature)
+## 8. Analytics & Reporting (Cross-Feature)
 
 - [ ] Edge Function cron to materialise summary tables
 - [ ] Unified analytics dashboard page
@@ -117,7 +149,7 @@
 - [ ] Realtime charts via Supabase Realtime
 - [ ] Google Data Studio connector _(future)_
 
-## 8. Quality & Testing
+## 9. Quality & Testing
 
 - [ ] Vitest + React Testing Library setup
 - [ ] Coverage gate ≥ 90% for business logic
@@ -127,4 +159,4 @@
 
 ---
 
-_Last updated: 2025-07-04_
+_Last updated: 2025-01-21_
