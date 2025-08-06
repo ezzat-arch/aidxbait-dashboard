@@ -15,9 +15,10 @@ const handleGetPrograms = withPermission(
 				.select(
 					`
 					*,
-					joints (
+					program_joint_names (
 						id,
-						name
+						name,
+						name_ar
 					)
 				`
 				)
@@ -132,9 +133,9 @@ const handleCreateProgram = withPermission(
 				);
 			}
 
-			// Verify that the joint exists
+			// Verify that the program joint exists
 			const { data: joint, error: jointError } = await supabase
-				.from("joints")
+				.from("program_joint_names")
 				.select("id")
 				.eq("id", body.joint_id)
 				.single();

@@ -30,11 +30,11 @@ import { PermissionGate } from "@/components/rbac/permission-gate";
 import { Permission } from "@/types/permission-types";
 import { BulkReviewDialog } from "@/components/store/bulk-review-dialog";
 import { DeleteConfirmDialog } from "@/components/store/delete-confirm-dialog";
-import type { ProductReview, ProductWithCategory } from "@/types/store-types";
+import type { ProductReview, ProductWithJoints } from "@/types/store-types";
 
 export function ReviewsTab() {
 	const [reviews, setReviews] = useState<ProductReview[]>([]);
-	const [products, setProducts] = useState<ProductWithCategory[]>([]);
+	const [products, setProducts] = useState<ProductWithJoints[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [selectedReview, setSelectedReview] = useState<ProductReview | null>(
 		null

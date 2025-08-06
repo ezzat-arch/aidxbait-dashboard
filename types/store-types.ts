@@ -13,31 +13,27 @@ export type Currency =
 	| "QAR";
 export type RentTerm = "per_day" | "per_week" | "per_month";
 
-export interface Category {
+// Product joint names - separate from program joint names
+export interface ProductJointName {
 	id: number;
 	name: string;
-	description?: string;
-	created_at: string;
-	updated_at: string;
-}
-
-export interface Joint {
-	id: number;
-	name: string;
+	name_ar: string;
 }
 
 export interface Product {
 	id: number;
 	name: string;
+	name_ar: string;
 	description?: string;
+	description_ar?: string;
 	price: number;
 	discounted_price?: number;
 	currency: Currency;
 	stock: number;
-	category_id: number;
 	is_best_seller: boolean;
 	is_featured: boolean;
 	is_available: boolean;
+	is_oos: boolean;
 	is_for_rent: boolean;
 	rent_term?: RentTerm;
 	tags: string[];
@@ -46,9 +42,9 @@ export interface Product {
 	updated_at: string;
 }
 
-export interface ProductWithCategory extends Product {
-	category: Category;
+export interface ProductWithJoints extends Product {
 	product_images?: ProductImage[];
+	joints?: ProductJointName[];
 }
 
 export interface ProductImage {
@@ -88,43 +84,37 @@ export interface ProductReview {
 
 // Extended types for UI components
 export interface ProductWithDetails extends Product {
-	category: Category;
 	product_images: ProductImage[];
-	joints: Joint[];
+	joints: ProductJointName[];
 	reviews: ProductReview[];
 	average_rating?: number;
 	review_count?: number;
 }
 
 // Form types for creating/editing
-export interface CreateCategoryData {
+export interface CreateProductJointNameData {
 	name: string;
-	description?: string;
+	name_ar: string;
 }
 
-export interface UpdateCategoryData extends Partial<CreateCategoryData> {
-	id: number;
-}
-
-export interface CreateJointData {
-	name: string;
-}
-
-export interface UpdateJointData extends Partial<CreateJointData> {
+export interface UpdateProductJointNameData
+	extends Partial<CreateProductJointNameData> {
 	id: number;
 }
 
 export interface CreateProductData {
 	name: string;
+	name_ar: string;
 	description?: string;
+	description_ar?: string;
 	price: number;
 	discounted_price?: number;
 	currency: Currency;
 	stock: number;
-	category_id: number;
 	is_best_seller?: boolean;
 	is_featured?: boolean;
 	is_available?: boolean;
+	is_oos?: boolean;
 	is_for_rent?: boolean;
 	rent_term?: RentTerm;
 	tags?: string[];
@@ -163,4 +153,69 @@ export interface StoreApiResponse<T> {
 export interface StoreError {
 	message: string;
 	field?: string;
+}
+
+// Upload-related types
+export interface UploadProgress {
+	current: number;
+	total: number;
+	currentFileName: string;
+}
+
+export interface UploadError {
+	fileName: string;
+	error: string;
+}
+
+export interface UploadResult {
+	filename: string;
+	url: string;
+	size: number;
+	type: string;
+}
+
+// Component prop types
+export interface ProductFormModalProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onSuccess: () => void;
+	title: string;
+	description: string;
+	product?: ProductWithDetails;
+}
+
+export interface ProductFormDrawerProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onSuccess: () => void;
+	title: string;
+	description: string;
+	product?: ProductWithJoints;
+}
+
+export interface JointFormDialogProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onSubmit: (data: { name: string; name_ar: string }) => Promise<void>;
+	title: string;
+	description: string;
+	defaultValues?: {
+		name: string;
+		name_ar: string;
+	};
+}
+
+export interface DeleteConfirmDialogProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onConfirm: () => Promise<void>;
+	title: string;
+	description: string;
+}
+
+export interface BulkReviewDialogProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onSuccess: () => void;
+	products: ProductWithJoints[];
 }

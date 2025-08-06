@@ -12,17 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface JointFormDialogProps {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	onSubmit: (data: { name: string }) => Promise<void>;
-	title: string;
-	description: string;
-	defaultValues?: {
-		name: string;
-	};
-}
+import type { JointFormDialogProps } from "@/types/store-types";
 
 export function JointFormDialog({
 	open,
@@ -34,6 +24,7 @@ export function JointFormDialog({
 }: JointFormDialogProps) {
 	const [formData, setFormData] = useState({
 		name: "",
+		name_ar: "",
 	});
 	const [loading, setLoading] = useState(false);
 
@@ -41,18 +32,19 @@ export function JointFormDialog({
 		if (defaultValues) {
 			setFormData(defaultValues);
 		} else {
-			setFormData({ name: "" });
+			setFormData({ name: "", name_ar: "" });
 		}
 	}, [defaultValues, open]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!formData.name.trim()) return;
+		if (!formData.name.trim() || !formData.name_ar.trim()) return;
 
 		try {
 			setLoading(true);
 			await onSubmit({
 				name: formData.name.trim(),
+				name_ar: formData.name_ar.trim(),
 			});
 		} finally {
 			setLoading(false);
@@ -75,7 +67,7 @@ export function JointFormDialog({
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="name">Joint Name *</Label>
+						<Label htmlFor="name">Joint Name (English) *</Label>
 						<Input
 							id="name"
 							value={formData.name}
@@ -88,6 +80,21 @@ export function JointFormDialog({
 						/>
 					</div>
 
+					<div className="space-y-2">
+						<Label htmlFor="name_ar">Joint Name (Arabic) *</Label>
+						<Input
+							id="name_ar"
+							value={formData.name_ar}
+							onChange={(e) =>
+								setFormData((prev) => ({ ...prev, name_ar: e.target.value }))
+							}
+							placeholder="مثل: الركبة، الكتف، الكاحل..."
+							required
+							disabled={loading}
+							dir="rtl"
+						/>
+					</div>
+
 					<DialogFooter>
 						<Button
 							type="button"
@@ -97,7 +104,12 @@ export function JointFormDialog({
 						>
 							Cancel
 						</Button>
-						<Button type="submit" disabled={loading || !formData.name.trim()}>
+						<Button
+							type="submit"
+							disabled={
+								loading || !formData.name.trim() || !formData.name_ar.trim()
+							}
+						>
 							{loading ? "Saving..." : "Save"}
 						</Button>
 					</DialogFooter>

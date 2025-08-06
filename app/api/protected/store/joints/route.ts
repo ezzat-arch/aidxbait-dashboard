@@ -9,9 +9,9 @@ const handleGetJoints = withPermission(
 		try {
 			const supabase = await createClient();
 
-			// Fetch joints
+			// Fetch product joint names
 			const { data: joints, error } = await supabase
-				.from("joints")
+				.from("product_joint_names")
 				.select("*")
 				.order("id");
 
@@ -52,11 +52,19 @@ const handleCreateJoint = withPermission(
 				);
 			}
 
-			// Create joint
+			if (!body.name_ar || typeof body.name_ar !== "string") {
+				return NextResponse.json(
+					{ error: "Arabic name is required and must be a string" },
+					{ status: 400 }
+				);
+			}
+
+			// Create product joint name
 			const { data: joint, error } = await supabase
-				.from("joints")
+				.from("product_joint_names")
 				.insert({
 					name: body.name.trim(),
+					name_ar: body.name_ar.trim(),
 				})
 				.select()
 				.single();
@@ -67,19 +75,19 @@ const handleCreateJoint = withPermission(
 				// Handle unique constraint violations
 				if (error.code === "23505") {
 					return NextResponse.json(
-						{ error: "A joint with this name already exists" },
+						{ error: "A product joint name with this name already exists" },
 						{ status: 409 }
 					);
 				}
 
 				return NextResponse.json(
-					{ error: "Failed to create joint" },
+					{ error: "Failed to create product joint name" },
 					{ status: 500 }
 				);
 			}
 
 			return NextResponse.json(
-				{ data: joint, message: "Joint created successfully" },
+				{ data: joint, message: "Product joint name created successfully" },
 				{ status: 201 }
 			);
 		} catch (error) {

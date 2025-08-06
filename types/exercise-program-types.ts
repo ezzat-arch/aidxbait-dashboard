@@ -1,5 +1,12 @@
 // Exercise Program entity types based on the database schema
 
+// Program joint names - separate from product joint names
+export interface ProgramJointName {
+	id: number;
+	name: string;
+	name_ar: string;
+}
+
 export interface Video {
 	id: number;
 	code: string;
@@ -45,10 +52,7 @@ export interface ProgramWithVideos extends Program {
 	videos: VideoWithProgramDetails[];
 	video_count?: number;
 	total_duration?: number; // in seconds
-	joints?: {
-		id: number;
-		name: string;
-	};
+	joint?: ProgramJointName;
 }
 
 export interface VideoWithProgramDetails extends Video {
@@ -57,6 +61,16 @@ export interface VideoWithProgramDetails extends Video {
 }
 
 // Form types for creating/editing
+export interface CreateProgramJointNameData {
+	name: string;
+	name_ar: string;
+}
+
+export interface UpdateProgramJointNameData
+	extends Partial<CreateProgramJointNameData> {
+	id: number;
+}
+
 export interface CreateVideoData {
 	code: string;
 	title: string;

@@ -25,9 +25,8 @@ const handleGetProduct = withPermission(
 				.select(
 					`
 					*,
-					category:categories(*),
 					product_images(*),
-					product_joints(joint_id, joints(id, name))
+					product_joints(joint_id, product_joint_names(id, name, name_ar))
 				`
 				)
 				.eq("id", productId)
@@ -60,7 +59,9 @@ const handleGetProduct = withPermission(
 				...product,
 				review_count: reviewCount,
 				average_rating: Math.round(averageRating * 10) / 10,
-				joints: product.product_joints?.map((pj: any) => pj.joints) || [],
+				joints:
+					product.product_joints?.map((pj: any) => pj.product_joint_names) ||
+					[],
 			};
 
 			return NextResponse.json({ data: productWithDetails });
@@ -92,9 +93,9 @@ const handleUpdateProduct = withPermission(
 			const body = await req.json();
 
 			// Basic validation
-			if (!body.name || !body.price || !body.category_id) {
+			if (!body.name || !body.name_ar || !body.price) {
 				return NextResponse.json(
-					{ error: "Name, price, and category_id are required" },
+					{ error: "Name (EN & AR) and price are required" },
 					{ status: 400 }
 				);
 			}
@@ -104,17 +105,19 @@ const handleUpdateProduct = withPermission(
 				.from("products")
 				.update({
 					name: body.name.trim(),
+					name_ar: body.name_ar.trim(),
 					description: body.description?.trim() || null,
+					description_ar: body.description_ar?.trim() || null,
 					price: parseFloat(body.price),
 					discounted_price: body.discounted_price
 						? parseFloat(body.discounted_price)
 						: null,
 					currency: body.currency || "EGP",
 					stock: parseInt(body.stock) || 0,
-					category_id: parseInt(body.category_id),
 					is_best_seller: body.is_best_seller || false,
 					is_featured: body.is_featured || false,
 					is_available: body.is_available !== false,
+					is_oos: body.is_oos || false,
 					is_for_rent: body.is_for_rent || false,
 					rent_term: body.rent_term || null,
 					tags: body.tags || [],

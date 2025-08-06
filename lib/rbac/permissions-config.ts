@@ -72,6 +72,18 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"DELETE /api/protected/exercise-programs/programs": [
 		Permission.DeleteExercisePrograms,
 	],
+	"GET /api/protected/exercise-programs/joints": [
+		Permission.ViewExercisePrograms,
+	],
+	"POST /api/protected/exercise-programs/joints": [
+		Permission.CreateExercisePrograms,
+	],
+	"PUT /api/protected/exercise-programs/joints": [
+		Permission.UpdateExercisePrograms,
+	],
+	"DELETE /api/protected/exercise-programs/joints": [
+		Permission.DeleteExercisePrograms,
+	],
 
 	// Program Subscriptions API permissions
 	"GET /api/protected/exercise-programs/subscriptions": [

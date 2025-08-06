@@ -3,29 +3,29 @@ import { createClient } from "@/lib/supabase/server";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 
-const handleGetCategories = withPermission(
-	[Permission.ViewStore],
+const handleGetProgramJoints = withPermission(
+	[Permission.ViewExercisePrograms],
 	async (req, context, user) => {
 		try {
 			const supabase = await createClient();
 
-			// Fetch categories (exclude soft deleted)
-			const { data: categories, error } = await supabase
-				.from("categories")
+			// Fetch program joint names
+			const { data: joints, error } = await supabase
+				.from("program_joint_names")
 				.select("*")
-				.order("name");
+				.order("id");
 
 			if (error) {
 				console.error("Database error:", error);
 				return NextResponse.json(
-					{ error: "Failed to fetch categories" },
+					{ error: "Failed to fetch program joints" },
 					{ status: 500 }
 				);
 			}
 
 			return NextResponse.json({
-				data: categories,
-				meta: { total: categories.length },
+				data: joints,
+				meta: { total: joints.length },
 			});
 		} catch (error) {
 			console.error("Unexpected error:", error);
@@ -37,8 +37,8 @@ const handleGetCategories = withPermission(
 	}
 );
 
-const handleCreateCategory = withPermission(
-	[Permission.CreateStoreItems],
+const handleCreateProgramJoint = withPermission(
+	[Permission.CreateExercisePrograms],
 	async (req, context, user) => {
 		try {
 			const supabase = await createClient();
@@ -52,14 +52,19 @@ const handleCreateCategory = withPermission(
 				);
 			}
 
-			// Create category
-			const { data: category, error } = await supabase
-				.from("categories")
+			if (!body.name_ar || typeof body.name_ar !== "string") {
+				return NextResponse.json(
+					{ error: "Arabic name is required and must be a string" },
+					{ status: 400 }
+				);
+			}
+
+			// Create program joint name
+			const { data: joint, error } = await supabase
+				.from("program_joint_names")
 				.insert({
 					name: body.name.trim(),
-					description: body.description?.trim() || null,
-					created_at: new Date().toISOString(),
-					updated_at: new Date().toISOString(),
+					name_ar: body.name_ar.trim(),
 				})
 				.select()
 				.single();
@@ -70,19 +75,19 @@ const handleCreateCategory = withPermission(
 				// Handle unique constraint violations
 				if (error.code === "23505") {
 					return NextResponse.json(
-						{ error: "A category with this name already exists" },
+						{ error: "A program joint name with this name already exists" },
 						{ status: 409 }
 					);
 				}
 
 				return NextResponse.json(
-					{ error: "Failed to create category" },
+					{ error: "Failed to create program joint name" },
 					{ status: 500 }
 				);
 			}
 
 			return NextResponse.json(
-				{ data: category, message: "Category created successfully" },
+				{ data: joint, message: "Program joint name created successfully" },
 				{ status: 201 }
 			);
 		} catch (error) {
@@ -95,5 +100,5 @@ const handleCreateCategory = withPermission(
 	}
 );
 
-export const GET = handleGetCategories;
-export const POST = handleCreateCategory;
+export const GET = handleGetProgramJoints;
+export const POST = handleCreateProgramJoint;

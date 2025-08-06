@@ -11,6 +11,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PriceInput } from "@/components/ui/price-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,8 +27,8 @@ import type {
 	CreateProgramData,
 	UpdateProgramData,
 	Program,
+	ProgramJointName,
 } from "@/types/exercise-program-types";
-import type { Joint } from "@/types/store-types";
 
 interface ProgramFormDialogProps {
 	open: boolean;
@@ -60,7 +61,7 @@ export function ProgramFormDialog({
 		price: 0,
 	});
 
-	const [joints, setJoints] = useState<Joint[]>([]);
+	const [joints, setJoints] = useState<ProgramJointName[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [jointsLoading, setJointsLoading] = useState(false);
 
@@ -74,12 +75,12 @@ export function ProgramFormDialog({
 	const fetchJoints = async () => {
 		try {
 			setJointsLoading(true);
-			const response = await fetch("/api/protected/store/joints");
-			if (!response.ok) throw new Error("Failed to fetch joints");
+			const response = await fetch("/api/protected/exercise-programs/joints");
+			if (!response.ok) throw new Error("Failed to fetch program joints");
 			const result = await response.json();
 			setJoints(result.data);
 		} catch (error) {
-			console.error("Failed to fetch joints:", error);
+			console.error("Failed to fetch program joints:", error);
 		} finally {
 			setJointsLoading(false);
 		}
@@ -294,19 +295,16 @@ export function ProgramFormDialog({
 					{/* Price Input */}
 					<div className="space-y-2">
 						<Label htmlFor="price">Price (EGP) *</Label>
-						<Input
+						<PriceInput
 							id="price"
-							type="number"
-							min="0"
-							step="0.01"
 							value={formData.price}
-							onChange={(e) =>
+							onChange={(value) =>
 								setFormData((prev) => ({
 									...prev,
-									price: parseFloat(e.target.value) || 0,
+									price: value,
 								}))
 							}
-							placeholder="0.00"
+							placeholder="Enter price"
 							required
 							disabled={loading}
 						/>

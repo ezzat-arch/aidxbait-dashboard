@@ -11,14 +11,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-
-interface DeleteConfirmDialogProps {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	onConfirm: () => Promise<void>;
-	title: string;
-	description: string;
-}
+import type { DeleteConfirmDialogProps } from "@/types/store-types";
 
 export function DeleteConfirmDialog({
 	open,

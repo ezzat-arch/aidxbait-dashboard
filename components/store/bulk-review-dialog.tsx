@@ -33,8 +33,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import type {
-	ProductWithCategory,
+	ProductWithJoints,
 	BulkCreateReviewsData,
+	BulkReviewDialogProps,
 } from "@/types/store-types";
 
 const formSchema = z.object({
@@ -50,13 +51,6 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
-
-interface BulkReviewDialogProps {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	onSuccess: () => void;
-	products: ProductWithCategory[];
-}
 
 export function BulkReviewDialog({
 	open,
@@ -170,7 +164,7 @@ export function BulkReviewDialog({
 													key={product.id}
 													value={product.id.toString()}
 												>
-													{product.name} - {product.category.name}
+													{product.name}
 												</SelectItem>
 											))}
 										</SelectContent>

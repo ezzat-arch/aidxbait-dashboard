@@ -29,12 +29,14 @@ import { PermissionGate } from "@/components/rbac/permission-gate";
 import { Permission } from "@/types/permission-types";
 import { JointFormDialog } from "@/components/store/joint-form-dialog";
 import { DeleteConfirmDialog } from "@/components/store/delete-confirm-dialog";
-import type { Joint } from "@/types/store-types";
+import type { ProductJointName } from "@/types/store-types";
 
 export function JointsTab() {
-	const [joints, setJoints] = useState<Joint[]>([]);
+	const [joints, setJoints] = useState<ProductJointName[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [selectedJoint, setSelectedJoint] = useState<Joint | null>(null);
+	const [selectedJoint, setSelectedJoint] = useState<ProductJointName | null>(
+		null
+	);
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showEditDialog, setShowEditDialog] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -62,7 +64,7 @@ export function JointsTab() {
 		}
 	};
 
-	const handleCreateJoint = async (data: { name: string }) => {
+	const handleCreateJoint = async (data: { name: string; name_ar: string }) => {
 		try {
 			const response = await fetch("/api/protected/store/joints", {
 				method: "POST",
@@ -88,7 +90,7 @@ export function JointsTab() {
 		}
 	};
 
-	const handleEditJoint = async (data: { name: string }) => {
+	const handleEditJoint = async (data: { name: string; name_ar: string }) => {
 		if (!selectedJoint) return;
 
 		try {
@@ -171,7 +173,8 @@ export function JointsTab() {
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead>Name</TableHead>
+							<TableHead className="text-center">Name (English)</TableHead>
+							<TableHead className="text-center">Name (Arabic)</TableHead>
 							<TableHead className="w-[50px]"></TableHead>
 						</TableRow>
 					</TableHeader>
@@ -179,8 +182,11 @@ export function JointsTab() {
 						{loading ? (
 							Array.from({ length: 5 }).map((_, index) => (
 								<TableRow key={`loading-${index}`}>
-									<TableCell>
-										<div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
+									<TableCell className="text-center">
+										<div className="h-4 w-24 bg-muted animate-pulse rounded mx-auto"></div>
+									</TableCell>
+									<TableCell className="text-center">
+										<div className="h-4 w-24 bg-muted animate-pulse rounded mx-auto"></div>
 									</TableCell>
 									<TableCell>
 										<div className="h-8 w-8 bg-muted animate-pulse rounded"></div>
@@ -190,7 +196,12 @@ export function JointsTab() {
 						) : joints.length > 0 ? (
 							joints.map((joint) => (
 								<TableRow key={joint.id}>
-									<TableCell className="font-medium">{joint.name}</TableCell>
+									<TableCell className="font-medium text-center">
+										{joint.name}
+									</TableCell>
+									<TableCell className="font-medium text-center" dir="rtl">
+										{joint.name_ar}
+									</TableCell>
 									<TableCell>
 										<PermissionGate
 											permissions={[
@@ -241,7 +252,7 @@ export function JointsTab() {
 						) : (
 							<TableRow>
 								<TableCell
-									colSpan={2}
+									colSpan={3}
 									className="text-center py-8 text-muted-foreground"
 								>
 									No joints found. Add body joints that products can be linked
@@ -272,6 +283,7 @@ export function JointsTab() {
 					description="Update joint information"
 					defaultValues={{
 						name: selectedJoint.name,
+						name_ar: selectedJoint.name_ar,
 					}}
 				/>
 			)}

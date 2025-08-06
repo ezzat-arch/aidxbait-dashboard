@@ -40,9 +40,10 @@ const handleGetProgram = withPermission(
 				.select(
 					`
 					*,
-					joints (
+					program_joint_names (
 						id,
-						name
+						name,
+						name_ar
 					),
 					program_videos(
 						sort_order,

@@ -10,16 +10,7 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
-import type { ProductWithCategory, Category, Joint } from "@/types/store-types";
-
-interface ProductFormDrawerProps {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	onSuccess: () => void;
-	title: string;
-	description: string;
-	product?: ProductWithCategory;
-}
+import type { ProductWithJoints, ProductJointName, ProductFormDrawerProps } from "@/types/store-types";
 
 export function ProductFormDrawer({
 	open,
@@ -30,28 +21,15 @@ export function ProductFormDrawer({
 	product,
 }: ProductFormDrawerProps) {
 	const [loading, setLoading] = useState(false);
-	const [categories, setCategories] = useState<Category[]>([]);
-	const [joints, setJoints] = useState<Joint[]>([]);
+
+	const [joints, setJoints] = useState<ProductJointName[]>([]);
 	const { toast } = useToast();
 
 	useEffect(() => {
 		if (open) {
-			fetchCategories();
 			fetchJoints();
 		}
 	}, [open]);
-
-	const fetchCategories = async () => {
-		try {
-			const response = await fetch("/api/protected/store/categories");
-			if (response.ok) {
-				const result = await response.json();
-				setCategories(result.data);
-			}
-		} catch (error) {
-			console.error("Failed to fetch categories:", error);
-		}
-	};
 
 	const fetchJoints = async () => {
 		try {
@@ -85,7 +63,7 @@ export function ProductFormDrawer({
 
 				<form onSubmit={handleSubmit} className="space-y-6 mt-6">
 					<div className="text-center py-12 text-muted-foreground">
-						<p>Product form with categories, joints, images, tags, etc.</p>
+						<p>Product form with joints, images, tags, etc.</p>
 						<p className="text-sm mt-2">
 							This comprehensive form is being implemented...
 						</p>

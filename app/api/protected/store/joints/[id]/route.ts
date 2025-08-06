@@ -19,9 +19,9 @@ const handleGetJoint = withPermission(
 
 			const supabase = await createClient();
 
-			// Fetch joint
+			// Fetch product joint name
 			const { data: joint, error } = await supabase
-				.from("joints")
+				.from("product_joint_names")
 				.select("*")
 				.eq("id", jointId)
 				.single();
@@ -67,11 +67,19 @@ const handleUpdateJoint = withPermission(
 				);
 			}
 
-			// Update joint
+			if (!body.name_ar || typeof body.name_ar !== "string") {
+				return NextResponse.json(
+					{ error: "Arabic name is required and must be a string" },
+					{ status: 400 }
+				);
+			}
+
+			// Update product joint name
 			const { data: joint, error } = await supabase
-				.from("joints")
+				.from("product_joint_names")
 				.update({
 					name: body.name.trim(),
+					name_ar: body.name_ar.trim(),
 				})
 				.eq("id", jointId)
 				.select()
@@ -145,9 +153,9 @@ const handleDeleteJoint = withPermission(
 				);
 			}
 
-			// Delete joint
+			// Delete product joint name
 			const { error } = await supabase
-				.from("joints")
+				.from("product_joint_names")
 				.delete()
 				.eq("id", jointId);
 
