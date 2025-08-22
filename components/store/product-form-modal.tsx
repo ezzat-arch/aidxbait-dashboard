@@ -44,6 +44,10 @@ import {
 	Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+	ProductMobilePreview,
+	type ProductPreviewData,
+} from "@/components/store/product-mobile-preview";
 import type {
 	ProductWithDetails,
 	ProductJointName,
@@ -176,7 +180,7 @@ const step2Schema = z.object({
 	is_available: z.boolean(),
 	is_oos: z.boolean(),
 	is_for_rent: z.boolean(),
-	rent_term: z.enum(["per_day", "per_week", "per_month"]).optional(),
+	rent_term: z.enum(["per_day", "per_week", "per_month"]).optional().nullable(),
 	tags: z.array(z.string()),
 	joint_ids: z.array(z.number()),
 });
@@ -191,6 +195,9 @@ const step3Schema = z.object({
 		)
 		.min(1, "At least one image is required"),
 });
+
+// Step 4 is just for preview - no additional validation needed
+const step4Schema = z.object({});
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -648,6 +655,52 @@ const DetailsStep = ({
 	);
 };
 
+// Step 4: Preview
+const PreviewStep = ({ form }: { form: any }) => {
+	// Watch form values to ensure preview updates when user navigates back
+	const watchedValues = form.watch();
+
+	// Map form data to preview data
+	const formData = watchedValues;
+	const previewData: ProductPreviewData = {
+		name: formData.name || "Product Name",
+		name_ar: formData.name_ar || "اسم المنتج",
+		description: formData.description,
+		description_ar: formData.description_ar,
+		price:
+			typeof formData.price === "string"
+				? parseFloat(formData.price) || 0
+				: formData.price || 0,
+		discounted_price:
+			typeof formData.discounted_price === "string"
+				? parseFloat(formData.discounted_price) || undefined
+				: formData.discounted_price,
+		currency: formData.currency || "EGP",
+		is_best_seller: Boolean(formData.is_best_seller),
+		is_featured: Boolean(formData.is_featured),
+		is_available: formData.is_available !== false,
+		is_oos: Boolean(formData.is_oos),
+		is_for_rent: Boolean(formData.is_for_rent),
+		images: formData.images || [],
+	};
+
+	return (
+		<div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+			<div className="space-y-4">
+				<h3 className="text-lg font-semibold">Mobile App Preview</h3>
+				<p className="text-sm text-muted-foreground">
+					This is how your product will appear in the mobile app. You can toggle
+					between English and Arabic to see both versions. If you need to make
+					changes, use the "Previous" button to go back to earlier steps.
+				</p>
+				<div className="flex justify-center">
+					<ProductMobilePreview data={previewData} />
+				</div>
+			</div>
+		</div>
+	);
+};
+
 // Step 3: Images
 const ImagesStep = ({ form }: { form: any }) => {
 	const [uploading, setUploading] = useState(false);
@@ -996,13 +1049,14 @@ export const ProductFormModal = ({
 	};
 
 	const validateStep2 = async () => {
+		const isForRent = form.getValues("is_for_rent");
 		const step2Data = {
 			is_best_seller: form.getValues("is_best_seller"),
 			is_featured: form.getValues("is_featured"),
 			is_available: form.getValues("is_available"),
 			is_oos: form.getValues("is_oos"),
-			is_for_rent: form.getValues("is_for_rent"),
-			rent_term: form.getValues("rent_term"),
+			is_for_rent: isForRent,
+			rent_term: isForRent ? form.getValues("rent_term") : undefined,
 			tags: form.getValues("tags"),
 			joint_ids: form.getValues("joint_ids"),
 		};
@@ -1012,6 +1066,7 @@ export const ProductFormModal = ({
 			return true;
 		} catch (error) {
 			if (error instanceof z.ZodError) {
+				console.log("Step 2 validation errors:", error.errors);
 				error.errors.forEach((err) => {
 					const fieldName = err.path[0] as string;
 					form.setError(fieldName as any, {
@@ -1044,6 +1099,11 @@ export const ProductFormModal = ({
 			}
 			return false;
 		}
+	};
+
+	const validateStep4 = async () => {
+		// Step 4 is just preview, no validation needed
+		return true;
 	};
 
 	useEffect(() => {
@@ -1111,7 +1171,7 @@ export const ProductFormModal = ({
 	};
 
 	const nextStep = async () => {
-		if (currentStep < 3) {
+		if (currentStep < 4) {
 			let isValid = false;
 
 			// Clear previous errors before validation
@@ -1124,6 +1184,9 @@ export const ProductFormModal = ({
 					break;
 				case 2:
 					isValid = await validateStep2();
+					break;
+				case 3:
+					isValid = await validateStep3();
 					break;
 				default:
 					isValid = true;
@@ -1148,17 +1211,7 @@ export const ProductFormModal = ({
 	};
 
 	const onSubmit = async (data: z.infer<typeof productSchema>) => {
-		// Only allow submission on the final step
-		if (currentStep !== 3) {
-			toast({
-				variant: "destructive",
-				title: "Invalid Step",
-				description: "Please complete all steps before submitting the form.",
-			});
-			return;
-		}
-
-		// Validate step 3 before submission
+		// Validate step 3 (images) before submission
 		const isStep3Valid = await validateStep3();
 		if (!isStep3Valid) {
 			toast({
@@ -1222,6 +1275,8 @@ export const ProductFormModal = ({
 				return <DetailsStep form={form} joints={joints} />;
 			case 3:
 				return <ImagesStep form={form} />;
+			case 4:
+				return <PreviewStep form={form} />;
 			default:
 				return null;
 		}
@@ -1229,29 +1284,23 @@ export const ProductFormModal = ({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+			<DialogContent
+				className={cn(
+					"max-h-[90vh] overflow-y-auto",
+					currentStep === 4 ? "max-w-6xl" : "max-w-4xl"
+				)}
+			>
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription>{description}</DialogDescription>
-					<StepIndicator currentStep={currentStep} totalSteps={3} />
+					<StepIndicator currentStep={currentStep} totalSteps={4} />
 				</DialogHeader>
 
 				<Form {...form}>
 					<form
 						onSubmit={(e) => {
 							e.preventDefault();
-							// Only allow submission on the final step
-							if (currentStep === 3) {
-								form.handleSubmit(onSubmit)(e);
-							} else {
-								// If user tries to submit from earlier steps, show a message
-								toast({
-									variant: "destructive",
-									title: "Complete All Steps",
-									description:
-										"Please complete all steps before submitting the form.",
-								});
-							}
+							// Prevent default form submission - we'll handle this manually
 						}}
 						className="space-y-6"
 					>
@@ -1282,20 +1331,24 @@ export const ProductFormModal = ({
 									Cancel
 								</Button>
 
-								{currentStep < 3 ? (
+								{currentStep < 4 ? (
 									<Button
 										type="button"
 										onClick={nextStep}
 										className="transition-all duration-200 hover:scale-105"
 									>
-										Next
+										{currentStep === 3 ? "Preview" : "Next"}
 										<ChevronRight className="h-4 w-4 ml-2" />
 									</Button>
 								) : (
 									<Button
-										type="submit"
+										type="button"
 										disabled={loading}
 										className="transition-all duration-200 hover:scale-105"
+										onClick={() => {
+											// Manually trigger form submission
+											form.handleSubmit(onSubmit)();
+										}}
 									>
 										{loading
 											? "Saving..."

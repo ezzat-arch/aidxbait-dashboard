@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, MoreHorizontal, Edit, Trash2, Package, Eye } from "lucide-react";
+import {
+	Plus,
+	MoreHorizontal,
+	Edit,
+	Trash2,
+	Package,
+	Eye,
+	Star,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
