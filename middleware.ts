@@ -14,6 +14,11 @@ const PUBLIC_ROUTES = ["/login", "/api/public"];
 const API_ROUTES = ["/api/"];
 
 export async function middleware(request: NextRequest) {
+	// Skip middleware during prerendering (when request.url is not a valid URL)
+	if (!request.url || !request.nextUrl) {
+		return NextResponse.next();
+	}
+
 	let supabaseResponse = NextResponse.next({
 		request,
 	});
