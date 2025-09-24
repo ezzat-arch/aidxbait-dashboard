@@ -1248,10 +1248,25 @@ export const ProductFormModal = ({
 				throw new Error(errorData.error || "Failed to save product");
 			}
 
-			toast({
-				title: "Success",
-				description: `Product ${product ? "updated" : "created"} successfully`,
-			});
+			const result = await response.json();
+
+			// Show warnings if any
+			if (result.warnings && result.warnings.length > 0) {
+				toast({
+					title: "Partial Success",
+					description: `Product ${
+						product ? "updated" : "created"
+					} with warnings: ${result.warnings.join(", ")}`,
+					variant: "destructive",
+				});
+			} else {
+				toast({
+					title: "Success",
+					description: `Product ${
+						product ? "updated" : "created"
+					} successfully`,
+				});
+			}
 
 			onOpenChange(false);
 			onSuccess();

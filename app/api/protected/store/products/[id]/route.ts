@@ -100,8 +100,27 @@ const handleUpdateProduct = withPermission(
 				);
 			}
 
+			// Check if product exists and is not soft deleted
+			const { data: existingProduct, error: checkError } = await supabase
+				.from("products")
+				.select("id")
+				.eq("id", productId)
+				.eq("soft_deleted", false)
+				.single();
+
+			if (checkError || !existingProduct) {
+				console.error("Product check error:", checkError);
+				return NextResponse.json(
+					{ error: "Product not found" },
+					{ status: 404 }
+				);
+			}
+
+			// Start transaction-like operations with proper error handling
+			const errors: string[] = [];
+
 			// Update product
-			const { data: product, error } = await supabase
+			const { data: product, error: productError } = await supabase
 				.from("products")
 				.update({
 					name: body.name.trim(),
@@ -128,10 +147,10 @@ const handleUpdateProduct = withPermission(
 				.select()
 				.single();
 
-			if (error) {
-				console.error("Database error:", error);
+			if (productError) {
+				console.error("Product update error:", productError);
 
-				if (error.code === "23505") {
+				if (productError.code === "23505") {
 					return NextResponse.json(
 						{ error: "A product with this name already exists" },
 						{ status: 409 }
@@ -139,66 +158,95 @@ const handleUpdateProduct = withPermission(
 				}
 
 				return NextResponse.json(
-					{ error: "Product not found or failed to update" },
+					{ error: "Failed to update product" },
+					{ status: 500 }
+				);
+			}
+
+			if (!product) {
+				return NextResponse.json(
+					{ error: "Product not found" },
 					{ status: 404 }
 				);
 			}
 
 			// Update product images if provided
 			if (body.images !== undefined) {
-				// Delete existing images
-				await supabase
-					.from("product_images")
-					.delete()
-					.eq("product_id", productId);
-
-				// Insert new images
-				if (body.images.length > 0) {
-					const imageInserts = body.images.map((img: any) => ({
-						product_id: productId,
-						image_url: img.url,
-						is_main: img.is_main || false,
-					}));
-
-					const { error: imageError } = await supabase
+				try {
+					// Delete existing images
+					const { error: deleteImagesError } = await supabase
 						.from("product_images")
-						.insert(imageInserts);
+						.delete()
+						.eq("product_id", productId);
 
-					if (imageError) {
-						console.error("Image update error:", imageError);
+					if (deleteImagesError) {
+						console.error("Delete images error:", deleteImagesError);
+						errors.push("Failed to delete existing images");
+					} else if (body.images.length > 0) {
+						// Insert new images only if deletion was successful
+						const imageInserts = body.images.map((img: any) => ({
+							product_id: productId,
+							image_url: img.url,
+							is_main: img.is_main || false,
+						}));
+
+						const { error: imageError } = await supabase
+							.from("product_images")
+							.insert(imageInserts);
+
+						if (imageError) {
+							console.error("Image insert error:", imageError);
+							errors.push("Failed to update product images");
+						}
 					}
+				} catch (imageOperationError) {
+					console.error("Image operation error:", imageOperationError);
+					errors.push("Image update operation failed");
 				}
 			}
 
 			// Update product-joint relationships if provided
 			if (body.joint_ids !== undefined) {
-				// Delete existing relationships
-				await supabase
-					.from("product_joints")
-					.delete()
-					.eq("product_id", productId);
-
-				// Insert new relationships
-				if (body.joint_ids.length > 0) {
-					const jointInserts = body.joint_ids.map((jointId: number) => ({
-						product_id: productId,
-						joint_id: jointId,
-					}));
-
-					const { error: jointError } = await supabase
+				try {
+					// Delete existing relationships
+					const { error: deleteJointsError } = await supabase
 						.from("product_joints")
-						.insert(jointInserts);
+						.delete()
+						.eq("product_id", productId);
 
-					if (jointError) {
-						console.error("Joint relationship update error:", jointError);
+					if (deleteJointsError) {
+						console.error("Delete joints error:", deleteJointsError);
+						errors.push("Failed to delete existing joint relationships");
+					} else if (body.joint_ids.length > 0) {
+						// Insert new relationships only if deletion was successful
+						const jointInserts = body.joint_ids.map((jointId: number) => ({
+							product_id: productId,
+							joint_id: jointId,
+						}));
+
+						const { error: jointError } = await supabase
+							.from("product_joints")
+							.insert(jointInserts);
+
+						if (jointError) {
+							console.error("Joint insert error:", jointError);
+							errors.push("Failed to update joint relationships");
+						}
 					}
+				} catch (jointOperationError) {
+					console.error("Joint operation error:", jointOperationError);
+					errors.push("Joint relationship update operation failed");
 				}
 			}
 
-			return NextResponse.json({
+			// Return response with warnings if there were non-critical errors
+			const response = {
 				data: product,
 				message: "Product updated successfully",
-			});
+				...(errors.length > 0 && { warnings: errors }),
+			};
+
+			return NextResponse.json(response);
 		} catch (error) {
 			console.error("Unexpected error:", error);
 			return NextResponse.json(
