@@ -1211,6 +1211,8 @@ export const ProductFormModal = ({
 	};
 
 	const onSubmit = async (data: z.infer<typeof productSchema>) => {
+		console.log("onSubmit called with data:", data);
+
 		// Validate step 3 (images) before submission
 		const isStep3Valid = await validateStep3();
 		if (!isStep3Valid) {
@@ -1231,11 +1233,15 @@ export const ProductFormModal = ({
 				rent_term: data.is_for_rent ? data.rent_term : undefined,
 			};
 
+			console.log("Submitting data:", submitData);
+
 			const url = product
 				? `/api/protected/store/products/${product.id}`
 				: "/api/protected/store/products";
 
 			const method = product ? "PUT" : "POST";
+
+			console.log("Making request to:", url, "with method:", method);
 
 			const response = await fetch(url, {
 				method,
@@ -1271,6 +1277,7 @@ export const ProductFormModal = ({
 			onOpenChange(false);
 			onSuccess();
 		} catch (error) {
+			console.error("Submit error:", error);
 			toast({
 				variant: "destructive",
 				title: "Error",
@@ -1279,6 +1286,53 @@ export const ProductFormModal = ({
 			});
 		} finally {
 			setLoading(false);
+		}
+	};
+
+	// Dedicated handler for the submit button
+	const handleSubmitButtonClick = async (e?: React.MouseEvent) => {
+		console.log("Submit button clicked");
+
+		// Prevent any default behavior
+		if (e) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		// Prevent double-clicks
+		if (loading) {
+			console.log("Already loading, ignoring click");
+			return;
+		}
+
+		try {
+			// Check if form is valid first
+			console.log("Triggering form validation...");
+			const isValid = await form.trigger();
+			console.log("Form validation result:", isValid);
+
+			if (!isValid) {
+				const formErrors = form.formState.errors;
+				console.log("Form errors:", formErrors);
+				toast({
+					variant: "destructive",
+					title: "Validation Error",
+					description: "Please fix the form errors before submitting.",
+				});
+				return;
+			}
+
+			// Use handleSubmit which properly validates and transforms the data
+			console.log("Form is valid, submitting...");
+			const submitFn = form.handleSubmit(onSubmit);
+			await submitFn();
+		} catch (error) {
+			console.error("Submit button error:", error);
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: "Failed to submit form. Please try again.",
+			});
 		}
 	};
 
@@ -1360,10 +1414,7 @@ export const ProductFormModal = ({
 										type="button"
 										disabled={loading}
 										className="transition-all duration-200 hover:scale-105"
-										onClick={() => {
-											// Manually trigger form submission
-											form.handleSubmit(onSubmit)();
-										}}
+										onClick={handleSubmitButtonClick}
 									>
 										{loading
 											? "Saving..."
