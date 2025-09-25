@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import {
 	Upload,
@@ -42,6 +43,7 @@ import {
 	ChevronRight,
 	ChevronLeft,
 	Check,
+	AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -112,7 +114,7 @@ const productSchema = z.object({
 	is_available: z.boolean(),
 	is_oos: z.boolean(),
 	is_for_rent: z.boolean(),
-	rent_term: z.enum(["per_day", "per_week", "per_month"]).optional(),
+	rent_term: z.enum(["per_day", "per_week", "per_month"]).optional().nullable(),
 	tags: z.array(z.string()),
 	joint_ids: z.array(z.number()),
 	images: z.array(
@@ -580,7 +582,13 @@ const DetailsStep = ({
 								<FormControl>
 									<Checkbox
 										checked={field.value}
-										onCheckedChange={field.onChange}
+										onCheckedChange={(checked) => {
+											field.onChange(checked);
+											// Reset rent_term when "for rent" is unchecked
+											if (!checked) {
+												form.setValue("rent_term", null);
+											}
+										}}
 									/>
 								</FormControl>
 								<div className="space-y-1 leading-none">
@@ -598,7 +606,10 @@ const DetailsStep = ({
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>Rent Term</FormLabel>
-								<Select onValueChange={field.onChange} value={field.value}>
+								<Select
+									onValueChange={field.onChange}
+									value={field.value || undefined}
+								>
 									<FormControl>
 										<SelectTrigger className="w-[200px]">
 											<SelectValue placeholder="Select rent term" />
@@ -652,6 +663,27 @@ const DetailsStep = ({
 				</div>
 			</div>
 		</div>
+	);
+};
+
+// Validation Error Display Component
+const ValidationErrorDisplay = ({ errors }: { errors: string[] }) => {
+	if (errors.length === 0) return null;
+
+	return (
+		<Alert variant="destructive" className="mb-4">
+			<AlertTriangle className="h-4 w-4" />
+			<AlertDescription>
+				<div className="font-medium mb-2">Please fix the following errors:</div>
+				<ul className="list-disc list-inside space-y-1">
+					{errors.map((error, index) => (
+						<li key={index} className="text-sm">
+							{error}
+						</li>
+					))}
+				</ul>
+			</AlertDescription>
+		</Alert>
 	);
 };
 
@@ -993,6 +1025,7 @@ export const ProductFormModal = ({
 	const [currentStep, setCurrentStep] = useState(1);
 	const [loading, setLoading] = useState(false);
 	const [joints, setJoints] = useState<ProductJointName[]>([]);
+	const [validationErrors, setValidationErrors] = useState<string[]>([]);
 	const { toast } = useToast();
 
 	const form = useForm({
@@ -1011,6 +1044,7 @@ export const ProductFormModal = ({
 			is_available: true,
 			is_oos: false,
 			is_for_rent: false,
+			rent_term: null,
 			tags: [],
 			joint_ids: [],
 			images: [],
@@ -1036,13 +1070,16 @@ export const ProductFormModal = ({
 			return true;
 		} catch (error) {
 			if (error instanceof z.ZodError) {
+				const errors: string[] = [];
 				error.errors.forEach((err) => {
 					const fieldName = err.path[0] as string;
 					form.setError(fieldName as any, {
 						type: "manual",
 						message: err.message,
 					});
+					errors.push(`${fieldName}: ${err.message}`);
 				});
+				setValidationErrors(errors);
 			}
 			return false;
 		}
@@ -1050,13 +1087,15 @@ export const ProductFormModal = ({
 
 	const validateStep2 = async () => {
 		const isForRent = form.getValues("is_for_rent");
+		const rentTermValue = form.getValues("rent_term");
+
 		const step2Data = {
 			is_best_seller: form.getValues("is_best_seller"),
 			is_featured: form.getValues("is_featured"),
 			is_available: form.getValues("is_available"),
 			is_oos: form.getValues("is_oos"),
 			is_for_rent: isForRent,
-			rent_term: isForRent ? form.getValues("rent_term") : undefined,
+			rent_term: isForRent ? rentTermValue : null,
 			tags: form.getValues("tags"),
 			joint_ids: form.getValues("joint_ids"),
 		};
@@ -1066,14 +1105,18 @@ export const ProductFormModal = ({
 			return true;
 		} catch (error) {
 			if (error instanceof z.ZodError) {
-				console.log("Step 2 validation errors:", error.errors);
+				const errors: string[] = [];
 				error.errors.forEach((err) => {
 					const fieldName = err.path[0] as string;
+					const fieldLabel =
+						fieldName === "rent_term" ? "Rent Term" : fieldName;
 					form.setError(fieldName as any, {
 						type: "manual",
 						message: err.message,
 					});
+					errors.push(`${fieldLabel}: ${err.message}`);
 				});
+				setValidationErrors(errors);
 			}
 			return false;
 		}
@@ -1089,13 +1132,18 @@ export const ProductFormModal = ({
 			return true;
 		} catch (error) {
 			if (error instanceof z.ZodError) {
+				const errors: string[] = [];
 				error.errors.forEach((err) => {
 					const fieldName = err.path[0] as string;
+					const fieldLabel =
+						fieldName === "images" ? "Product Images" : fieldName;
 					form.setError(fieldName as any, {
 						type: "manual",
 						message: err.message,
 					});
+					errors.push(`${fieldLabel}: ${err.message}`);
 				});
+				setValidationErrors(errors);
 			}
 			return false;
 		}
@@ -1110,6 +1158,7 @@ export const ProductFormModal = ({
 		if (open) {
 			fetchJoints();
 			setCurrentStep(1);
+			setValidationErrors([]);
 
 			if (product) {
 				form.reset({
@@ -1150,6 +1199,7 @@ export const ProductFormModal = ({
 					is_available: true,
 					is_oos: false,
 					is_for_rent: false,
+					rent_term: null,
 					tags: [],
 					joint_ids: [],
 					images: [],
@@ -1166,7 +1216,7 @@ export const ProductFormModal = ({
 				setJoints(result.data);
 			}
 		} catch (error) {
-			console.error("Failed to fetch joints:", error);
+			// Silently handle joint fetch errors
 		}
 	};
 
@@ -1176,6 +1226,7 @@ export const ProductFormModal = ({
 
 			// Clear previous errors before validation
 			form.clearErrors();
+			setValidationErrors([]);
 
 			// Validate current step before proceeding
 			switch (currentStep) {
@@ -1206,13 +1257,12 @@ export const ProductFormModal = ({
 
 	const prevStep = () => {
 		if (currentStep > 1) {
+			setValidationErrors([]);
 			setCurrentStep(currentStep - 1);
 		}
 	};
 
 	const onSubmit = async (data: z.infer<typeof productSchema>) => {
-		console.log("onSubmit called with data:", data);
-
 		// Validate step 3 (images) before submission
 		const isStep3Valid = await validateStep3();
 		if (!isStep3Valid) {
@@ -1233,15 +1283,11 @@ export const ProductFormModal = ({
 				rent_term: data.is_for_rent ? data.rent_term : undefined,
 			};
 
-			console.log("Submitting data:", submitData);
-
 			const url = product
 				? `/api/protected/store/products/${product.id}`
 				: "/api/protected/store/products";
 
 			const method = product ? "PUT" : "POST";
-
-			console.log("Making request to:", url, "with method:", method);
 
 			const response = await fetch(url, {
 				method,
@@ -1277,7 +1323,6 @@ export const ProductFormModal = ({
 			onOpenChange(false);
 			onSuccess();
 		} catch (error) {
-			console.error("Submit error:", error);
 			toast({
 				variant: "destructive",
 				title: "Error",
@@ -1291,8 +1336,6 @@ export const ProductFormModal = ({
 
 	// Dedicated handler for the submit button
 	const handleSubmitButtonClick = async (e?: React.MouseEvent) => {
-		console.log("Submit button clicked");
-
 		// Prevent any default behavior
 		if (e) {
 			e.preventDefault();
@@ -1301,19 +1344,39 @@ export const ProductFormModal = ({
 
 		// Prevent double-clicks
 		if (loading) {
-			console.log("Already loading, ignoring click");
 			return;
 		}
 
 		try {
+			// Clear previous validation errors
+			setValidationErrors([]);
+
 			// Check if form is valid first
-			console.log("Triggering form validation...");
 			const isValid = await form.trigger();
-			console.log("Form validation result:", isValid);
 
 			if (!isValid) {
 				const formErrors = form.formState.errors;
-				console.log("Form errors:", formErrors);
+				const errorMessages: string[] = [];
+
+				// Collect form errors with user-friendly labels
+				Object.entries(formErrors).forEach(([key, error]) => {
+					if (error?.message) {
+						const fieldLabel =
+							{
+								name: "Product Name (English)",
+								name_ar: "Product Name (Arabic)",
+								price: "Price",
+								currency: "Currency",
+								stock: "Stock Quantity",
+								rent_term: "Rent Term",
+								images: "Product Images",
+							}[key] || key;
+
+						errorMessages.push(`${fieldLabel}: ${error.message}`);
+					}
+				});
+
+				setValidationErrors(errorMessages);
 				toast({
 					variant: "destructive",
 					title: "Validation Error",
@@ -1323,11 +1386,9 @@ export const ProductFormModal = ({
 			}
 
 			// Use handleSubmit which properly validates and transforms the data
-			console.log("Form is valid, submitting...");
 			const submitFn = form.handleSubmit(onSubmit);
 			await submitFn();
 		} catch (error) {
-			console.error("Submit button error:", error);
 			toast({
 				variant: "destructive",
 				title: "Error",
@@ -1373,6 +1434,7 @@ export const ProductFormModal = ({
 						}}
 						className="space-y-6"
 					>
+						<ValidationErrorDisplay errors={validationErrors} />
 						{renderStep()}
 
 						<div className="flex justify-between pt-6 border-t">
