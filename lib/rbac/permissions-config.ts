@@ -8,15 +8,13 @@ import {
 export const ROLE_PERMISSIONS: RolePermissions = {
 	[Role.Superuser]: Object.values(Permission), // Superusers have all permissions
 	[Role.Admin]: [
-		Permission.ViewUsers,
-		Permission.CreateUsers,
-		Permission.UpdateUsers,
-		Permission.DeleteUsers,
-		Permission.ViewSettings,
-		Permission.UpdateSettings,
-		Permission.ViewAuditLogs,
-		Permission.ViewStore, // Admins can view store
-		Permission.ViewSubscriptions, // Admins can view subscriptions
+		// Store - Full CRUD access (ONLY permission for admins)
+		Permission.ViewStore,
+		Permission.CreateStoreItems,
+		Permission.UpdateStoreItems,
+		Permission.DeleteStoreItems,
+		// Note: Admins ONLY have access to the store tab
+		// No access to: users, settings, audit logs, exercise programs, or subscriptions
 	],
 	[Role.Therapist]: [],
 	[Role.Consultant]: [],
