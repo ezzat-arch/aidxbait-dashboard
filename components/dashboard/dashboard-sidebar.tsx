@@ -14,6 +14,7 @@ import {
 	ShoppingBag,
 	Dumbbell,
 	CalendarDays,
+	ShoppingCart,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -62,6 +63,13 @@ export function DashboardSidebar() {
 			href: "/dashboard/store",
 			icon: ShoppingBag,
 			permission: Permission.ViewStore,
+			disabled: false,
+		},
+		{
+			title: "Orders",
+			href: "/dashboard/orders",
+			icon: ShoppingCart,
+			permission: Permission.ViewOrders,
 			disabled: false,
 		},
 		{

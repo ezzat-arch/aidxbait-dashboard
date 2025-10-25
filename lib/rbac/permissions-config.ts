@@ -34,6 +34,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
 	"/dashboard/store": [Permission.ViewStore],
 	"/dashboard/exercise-programs": [Permission.ViewExercisePrograms],
 	"/dashboard/program-subscription": [Permission.ViewSubscriptions],
+	"/dashboard/orders": [Permission.ViewOrders],
 };
 
 // Define API route permissions
@@ -96,4 +97,10 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"DELETE /api/protected/exercise-programs/subscriptions": [
 		Permission.CancelSubscriptions,
 	],
+
+	// Order Management API permissions
+	"GET /api/protected/orders": [Permission.ViewOrders],
+	"GET /api/protected/orders/[id]": [Permission.ViewOrderDetails],
+	"PUT /api/protected/orders/[id]": [Permission.UpdateOrderStatus],
+	"PUT /api/protected/orders/[id]/cancel": [Permission.CancelOrder],
 };

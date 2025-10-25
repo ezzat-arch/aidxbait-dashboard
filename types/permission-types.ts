@@ -36,6 +36,13 @@ export enum Permission {
 	CreateSubscriptions = "subscriptions:create",
 	UpdateSubscriptions = "subscriptions:update",
 	CancelSubscriptions = "subscriptions:cancel",
+
+	// Order management permissions
+	ViewOrders = "orders:view",
+	ViewOrderDetails = "orders:view-details",
+	UpdateOrderStatus = "orders:update-status",
+	CancelOrder = "orders:cancel",
+	ManageRefunds = "orders:manage-refunds",
 }
 
 // Define role types
