@@ -36,22 +36,22 @@ const overviewQuestions: QuestionConfig[] = [
 		query: () => `
 			SELECT 
 				CASE 
-					WHEN COALESCE(discounted_price, price) < 500 THEN 'Under 500 EGP'
-					WHEN COALESCE(discounted_price, price) < 1000 THEN '500-1000 EGP'
-					WHEN COALESCE(discounted_price, price) < 2000 THEN '1000-2000 EGP'
-					WHEN COALESCE(discounted_price, price) < 5000 THEN '2000-5000 EGP'
-					ELSE '5000+ EGP'
+					WHEN COALESCE(discounted_price, price) < 100 THEN '0-100 EGP'
+					WHEN COALESCE(discounted_price, price) < 200 THEN '100-200 EGP'
+					WHEN COALESCE(discounted_price, price) < 300 THEN '200-300 EGP'
+					WHEN COALESCE(discounted_price, price) < 500 THEN '300-500 EGP'
+					ELSE '500+ EGP'
 				END as name,
 				COUNT(*) as value
 			FROM products
 			WHERE soft_deleted = false
 			GROUP BY 
 				CASE 
-					WHEN COALESCE(discounted_price, price) < 500 THEN 'Under 500 EGP'
-					WHEN COALESCE(discounted_price, price) < 1000 THEN '500-1000 EGP'
-					WHEN COALESCE(discounted_price, price) < 2000 THEN '1000-2000 EGP'
-					WHEN COALESCE(discounted_price, price) < 5000 THEN '2000-5000 EGP'
-					ELSE '5000+ EGP'
+					WHEN COALESCE(discounted_price, price) < 100 THEN '0-100 EGP'
+					WHEN COALESCE(discounted_price, price) < 200 THEN '100-200 EGP'
+					WHEN COALESCE(discounted_price, price) < 300 THEN '200-300 EGP'
+					WHEN COALESCE(discounted_price, price) < 500 THEN '300-500 EGP'
+					ELSE '500+ EGP'
 				END
 			ORDER BY MIN(COALESCE(discounted_price, price)) ASC
 		`,
