@@ -1,0 +1,674 @@
+---
+title: Analytics Dashboard Architecture & Developer Guide
+alwaysApply: false
+---
+
+# Analytics Dashboard – Developer Guide
+
+## Overview
+
+The Analytics Dashboard is a **modular, question-based system** that allows developers to add new analytics insights by simply defining SQL queries and minimal configuration—no architectural changes required.
+
+### Key Features
+
+- **Server-side execution**: All queries run in Server Components using service role credentials
+- **RLS bypass**: Analytics queries aggregate across all data (permission-gated at page level)
+- **Multiple visualizations**: Table, Bar Chart, Line Chart, Pie Chart, and Metric cards
+- **Date filtering**: Shared date-range filter updates all questions in real-time
+- **URL state**: Filter, tab, collection, and search state persisted in URL for shareability
+- **Collections**: Questions organized into logical collections for easy navigation
+- **Search**: Fuzzy search across question titles to quickly find specific insights
+
+---
+
+## Architecture
+
+### File Structure
+
+```
+components/analytics/
+  ├── question-card.tsx                    # Generic card renderer (Server Component)
+  ├── collection-view.tsx                  # Collection navigator with search (Client Component)
+  ├── date-range-filter.tsx                # Shared filter UI (Client Component)
+  ├── chart-renderers/
+  │   ├── bar-chart-renderer.tsx           # Recharts bar chart wrapper
+  │   ├── line-chart-renderer.tsx          # Recharts line chart wrapper
+  │   ├── pie-chart-renderer.tsx           # Recharts pie chart wrapper
+  │   └── metric-renderer.tsx              # Large number display
+  └── tabs/
+      ├── store-questions.ts               # Store products collections & questions
+      ├── store-tab.tsx                    # Store tab Server Component
+      ├── programs-questions.ts            # Exercise programs collections & questions
+      └── programs-tab.tsx                 # Programs tab Server Component
+
+lib/supabase/
+  └── analytics-client.ts                  # Service role client for analytics
+
+types/
+  └── analytics-types.ts                   # Shared TypeScript interfaces
+
+app/dashboard/analytics/
+  └── page.tsx                             # Main page with tabs + filter state
+```
+
+### Data Flow
+
+1. **User changes date range** → Updates URL query params → Triggers re-render
+2. **User selects collection or searches** → Updates URL query params → Filters visible questions
+3. **Tab component (Server)** → Passes collections to `CollectionView`
+4. **CollectionView (Client)** → Filters questions based on collection/search → Renders `QuestionCard` per question
+5. **QuestionCard (Server)** → Executes SQL via service role client → Renders chart/table based on type
+6. **Chart renderers (Client)** → Receive data as props → Render using Recharts
+
+---
+
+## Collections Organization
+
+Questions are organized into **collections** - logical groupings of related analytics insights within each tab. For example, the Store tab has collections for "Overview", "Inventory", and "Reviews & Ratings".
+
+### Benefits
+
+- **Better navigation**: Users can quickly jump to the type of insights they need
+- **Logical grouping**: Related questions are kept together
+- **Search functionality**: Users can search across all questions by title
+- **Scalability**: Easy to add many questions without cluttering the UI
+
+### Collection Structure
+
+Collections are defined in the question files (e.g., `store-questions.ts`):
+
+```typescript
+export const storeCollections: QuestionCollection[] = [
+	{
+		id: "overview",
+		name: "Overview",
+		description: "Key metrics and statistics",
+		questions: [
+			// QuestionConfig objects here
+		],
+	},
+	{
+		id: "inventory",
+		name: "Inventory",
+		description: "Stock levels and inventory value",
+		questions: [
+			// QuestionConfig objects here
+		],
+	},
+];
+```
+
+---
+
+## Adding a New Analytics Question
+
+Follow these steps to add a new analytics insight to any tab:
+
+### Step 1: Write the SQL Query
+
+**Test your query first** in the Supabase SQL Editor or your database tool.
+
+Example:
+
+```sql
+SELECT
+  p.name as product_name,
+  COUNT(pr.id) as review_count,
+  AVG(pr.rating) as avg_rating
+FROM products p
+LEFT JOIN product_reviews pr ON p.id = pr.product_id
+  AND pr.soft_deleted = false
+WHERE p.soft_deleted = false
+GROUP BY p.id, p.name
+ORDER BY avg_rating DESC
+LIMIT 10
+```
+
+**Key Requirements:**
+
+- Use column aliases that make sense as labels (e.g., `product_name`, not `p.name`)
+- Always filter out soft-deleted records where applicable
+- For time-series, use `DATE_TRUNC` for grouping by day/month
+- Limit results to avoid performance issues (typically `LIMIT 10-50`)
+
+### Step 2: Decide Which Collection
+
+Determine which collection your question belongs to. Open the appropriate questions file (e.g., `components/analytics/tabs/store-questions.ts`) and review existing collections.
+
+**Example collections:**
+
+- **Overview**: High-level metrics and KPIs
+- **Inventory**: Stock-related questions
+- **Reviews**: Customer feedback and ratings
+- **Subscriptions**: User subscription trends
+- **Programs**: Exercise program performance
+
+If none fit, you can create a new collection (see "Creating a New Collection" below).
+
+### Step 3: Create the QuestionConfig Object
+
+Add your question to the appropriate collection's questions array:
+
+```typescript
+// In store-questions.ts
+const inventoryQuestions: QuestionConfig[] = [
+	// ... existing questions ...
+
+	{
+		id: "your-unique-question-id", // Unique identifier
+		title: "Your Question Title", // Displayed in card header
+		description: "Brief explanation", // Optional subtitle
+		type: "bar_chart", // "table" | "bar_chart" | "line_chart" | "pie_chart" | "metric"
+		query: (dateRange: DateRange) => {
+			// Optional: Use date range in WHERE clause
+			const whereClause =
+				dateRange.from && dateRange.to
+					? `AND created_at >= '${formatDateForSQL(dateRange.from)}' 
+             AND created_at <= '${formatDateForSQL(dateRange.to)}'`
+					: "";
+
+			return `
+        SELECT 
+          column_name as name,           -- Required: 'name' for X-axis labels
+          COUNT(*) as value              -- Required: 'value' for Y-axis data
+        FROM your_table
+        WHERE soft_deleted = false
+        ${whereClause}
+        GROUP BY column_name
+        ORDER BY value DESC
+        LIMIT 10
+      `;
+		},
+		chartConfig: {
+			dataKey: "value", // Key from SQL result to plot
+			nameKey: "name", // Key from SQL result for labels (default: "name")
+			colors: ["hsl(var(--primary))"], // Optional: array of colors
+		},
+	},
+];
+```
+
+### Step 4: Understand Question Types
+
+#### **Table**
+
+Displays raw data in a sortable table.
+
+**SQL requirements:**
+
+- Column names will be auto-formatted as headers (e.g., `product_name` → "Product Name")
+- All columns in SELECT will be displayed
+
+**Config:**
+
+```typescript
+{
+  type: "table",
+  query: () => `SELECT name as "Product", price as "Price" FROM products`,
+  // No chartConfig needed
+}
+```
+
+#### **Bar Chart**
+
+Vertical bars for comparing categories.
+
+**SQL requirements:**
+
+- Must have a `name` column (X-axis labels)
+- Must have a `value` column (bar heights)
+
+**Config:**
+
+```typescript
+{
+  type: "bar_chart",
+  chartConfig: {
+    dataKey: "value",
+    nameKey: "name",
+  }
+}
+```
+
+#### **Line Chart**
+
+Time-series trends.
+
+**SQL requirements:**
+
+- Must have a `name` column (dates/time labels)
+- Must have a `value` column (line points)
+
+**Config:**
+
+```typescript
+{
+  type: "line_chart",
+  query: (dateRange) => `
+    SELECT
+      TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') as name,
+      COUNT(*) as value
+    FROM orders
+    GROUP BY DATE_TRUNC('month', created_at)
+    ORDER BY DATE_TRUNC('month', created_at) ASC
+  `,
+  chartConfig: {
+    dataKey: "value",
+    nameKey: "name",
+  }
+}
+```
+
+#### **Pie Chart**
+
+Proportional segments.
+
+**SQL requirements:**
+
+- Must have a `name` column (segment labels)
+- Must have a `value` column (segment sizes)
+
+**Config:**
+
+```typescript
+{
+  type: "pie_chart",
+  chartConfig: {
+    dataKey: "value",
+    nameKey: "name",
+    colors: ["hsl(var(--chart-1))", "hsl(var(--chart-2))"], // Optional
+  }
+}
+```
+
+#### **Metric**
+
+Single large number (e.g., total count).
+
+**SQL requirements:**
+
+- Must return exactly 1 row
+- Can have any column name (specify in metricConfig)
+
+**Config:**
+
+```typescript
+{
+  type: "metric",
+  query: () => `SELECT COUNT(*) as total FROM products`,
+  metricConfig: {
+    valueKey: "total",
+    label: "Total Products",
+    prefix: "$",      // Optional
+    suffix: " items", // Optional
+  }
+}
+```
+
+### Step 5: Test
+
+1. Start the dev server: `pnpm dev`
+2. Navigate to `/dashboard/analytics`
+3. Select the appropriate tab and collection
+4. Verify:
+   - Question card renders without errors
+   - Data displays correctly
+   - Date filter updates the question (if applicable)
+   - Chart/table is readable and meaningful
+   - Question appears in search results when searching by title
+
+---
+
+## Creating a New Collection
+
+If your question doesn't fit into existing collections, create a new one:
+
+### Step 1: Define the Question Array
+
+In the questions file (e.g., `store-questions.ts`), create a new array:
+
+```typescript
+const newCategoryQuestions: QuestionConfig[] = [
+	{
+		id: "first-question",
+		title: "First Question in New Category",
+		// ... rest of config
+	},
+	// Add more questions here
+];
+```
+
+### Step 2: Add to Collections Export
+
+Add your new collection to the exported array:
+
+```typescript
+export const storeCollections: QuestionCollection[] = [
+	{
+		id: "overview",
+		name: "Overview",
+		description: "Key metrics and statistics",
+		questions: overviewQuestions,
+	},
+	// ... existing collections ...
+	{
+		id: "new-category", // Unique ID (lowercase, hyphenated)
+		name: "New Category", // Display name
+		description: "Description of what this collection contains", // Optional
+		questions: newCategoryQuestions, // Your question array
+	},
+];
+```
+
+### Step 3: Test
+
+The new collection will automatically appear as a new tab within the main tab. No other code changes needed!
+
+**Note**: Collection tabs are displayed in the order they appear in the array. Place your new collection where it makes the most sense logically.
+
+---
+
+## Best Practices
+
+### Performance
+
+- **Use indexes**: Ensure frequently queried columns are indexed in Postgres
+- **Limit results**: Always use `LIMIT` to cap result set size
+- **Aggregate efficiently**: Prefer COUNT/SUM over fetching all rows and processing client-side
+- **Avoid N+1**: Use JOINs instead of separate queries
+
+### Security
+
+- **Never expose raw SQL to clients**: All queries execute server-side
+- **Service role is safe here**: Page is protected by `ViewAnalytics` permission gate
+- **Parameterize dates**: Use the `dateRange` parameter properly to avoid injection (though risk is minimal since it's server-only)
+
+### Maintainability
+
+- **Test queries first**: Use Supabase SQL Editor to validate before adding to code
+- **Comment complex logic**: Explain non-obvious WHERE clauses or JOINs
+- **Consistent naming**: Use `name` and `value` for chart data keys
+- **Descriptive titles**: Question titles should be clear and actionable
+
+---
+
+## Database Setup: RPC Function (Required)
+
+The analytics system requires a Postgres function to execute raw SQL. Run this migration in your Supabase SQL Editor:
+
+```sql
+-- Create analytics query execution function
+CREATE OR REPLACE FUNCTION execute_analytics_query(query_text TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  result JSONB;
+BEGIN
+  -- Execute the dynamic query and return results as JSONB
+  EXECUTE format('SELECT COALESCE(jsonb_agg(row_to_json(t)), ''[]''::jsonb) FROM (%s) t', query_text)
+  INTO result;
+
+  RETURN result;
+END;
+$$;
+
+-- Grant execute permission to service role
+GRANT EXECUTE ON FUNCTION execute_analytics_query(TEXT) TO service_role;
+```
+
+**Why is this needed?**
+Supabase doesn't allow arbitrary SQL from the client SDK. This function provides a secure way to execute analytics queries server-side with the service role key.
+
+---
+
+## ⚠️ CRITICAL: Database Schema Validation
+
+**ALWAYS verify that the tables and columns referenced in your SQL queries actually exist in the database before adding a new analytics question.**
+
+### Pre-Implementation Checklist
+
+Before adding any analytics question:
+
+1. **List all tables referenced** in your SQL query
+2. **Verify each table exists** in the database schema
+3. **Check all columns exist** in those tables
+4. **Validate join relationships** match the actual foreign keys
+5. **Test the query** in Supabase SQL Editor with sample data
+
+### How to Verify Schema
+
+**Method 1: Check Supabase Dashboard**
+
+- Navigate to Database → Tables
+- Confirm each table exists
+- Click table to view columns and types
+
+**Method 2: Run in SQL Editor**
+
+```sql
+-- List all tables
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public';
+
+-- Check specific table columns
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'your_table_name';
+```
+
+**Method 3: Review Migration Files**
+
+- Check `supabase-migrations/` directory
+- Review schema definitions in migration SQL files
+
+### Common Pitfall: Querying Unimplemented Features
+
+If you're adding analytics for a feature (e.g., Orders, Appointments), **confirm that feature's database tables exist first**. Check:
+
+- TASKS.md → Look for checkbox status of schema creation
+- PLANNING.md → Verify feature is marked as implemented
+
+### Example Error Scenario
+
+```typescript
+// ❌ BAD: Assumes orders table exists without verification
+query: () => `
+  SELECT COUNT(*) FROM orders
+  WHERE status = 'completed'
+`;
+
+// ✅ GOOD: Verified that orders table exists, or use existing tables
+query: () => `
+  SELECT COUNT(*) FROM products
+  WHERE soft_deleted = false
+`;
+```
+
+### Fallback Strategy
+
+If the ideal analytics question requires tables that don't exist yet:
+
+1. **Document the desired question** in a comment with `// TODO: Requires orders table`
+2. **Create an alternative question** using existing tables
+3. **Add a task** to TASKS.md to replace the question once the schema is ready
+4. **Leave clear instructions** for future implementation
+
+### Testing After Implementation
+
+After adding a question:
+
+1. Load the analytics page in your browser
+2. Verify the question renders without errors
+3. Check that data displays correctly (not just "No data")
+4. Test with date filters if applicable
+5. If errors occur, check browser console and Supabase logs for SQL errors
+
+---
+
+## Troubleshooting
+
+### "Analytics query execution failed"
+
+**Cause**: The `execute_analytics_query` Postgres function doesn't exist.
+
+**Fix**: Run the SQL migration above in your Supabase SQL Editor.
+
+---
+
+### Charts show "No data available"
+
+**Causes:**
+
+1. Query returns empty result set → Check query in SQL Editor with sample data
+2. Column names don't match chartConfig → Ensure SQL returns `name` and `value` columns
+3. Soft-deleted filter too aggressive → Verify data exists where `soft_deleted = false`
+
+**Fix**: Log the query result in `question-card.tsx` temporarily to inspect actual data shape.
+
+---
+
+### Table columns not displaying correctly
+
+**Cause**: Column names in SQL have underscores or unexpected casing.
+
+**Fix**: Use SQL aliases to format column names nicely:
+
+```sql
+SELECT
+  product_name as "Product Name",
+  created_at as "Created"
+FROM products
+```
+
+---
+
+### Date filter not working
+
+**Cause**: Query doesn't use the `dateRange` parameter.
+
+**Fix**: Update your query function to respect the date range:
+
+```typescript
+query: (dateRange: DateRange) => {
+	const whereClause =
+		dateRange.from && dateRange.to
+			? `AND created_at >= '${formatDateForSQL(dateRange.from)}' 
+       AND created_at <= '${formatDateForSQL(dateRange.to)}'`
+			: "";
+
+	return `SELECT ... WHERE 1=1 ${whereClause}`;
+};
+```
+
+---
+
+## Advanced: Custom Data Formatting
+
+If your query returns data in a shape that doesn't match the chart requirements, use the `formatter` function:
+
+```typescript
+{
+  id: "custom-format",
+  title: "Custom Question",
+  type: "bar_chart",
+  query: () => `SELECT product_id, review_count FROM analytics_cache`,
+  formatter: (rawData) => {
+    // Transform data to { name, value } format
+    return rawData.map(row => ({
+      name: `Product ${row.product_id}`,
+      value: row.review_count,
+    }));
+  },
+  chartConfig: {
+    dataKey: "value",
+    nameKey: "name",
+  }
+}
+```
+
+---
+
+## Example: Complete Question Walkthrough
+
+**Scenario**: We want to show "Revenue by Product Category" as a bar chart.
+
+### 1. Write SQL
+
+```sql
+SELECT
+  c.name as category_name,
+  SUM(p.price * p.stock) as total_value
+FROM categories c
+INNER JOIN products p ON c.id = p.category_id
+WHERE p.soft_deleted = false
+GROUP BY c.id, c.name
+ORDER BY total_value DESC
+LIMIT 10
+```
+
+### 2. Test in Supabase
+
+Run the query in SQL Editor → Verify results look correct.
+
+### 3. Add to `store-questions.ts`
+
+Decide this belongs in the "Inventory" collection, so add to `inventoryQuestions`:
+
+```typescript
+const inventoryQuestions: QuestionConfig[] = [
+	// ... existing inventory questions ...
+
+	{
+		id: "revenue-by-category",
+		title: "Revenue by Product Category",
+		description: "Total potential revenue grouped by product category",
+		type: "bar_chart",
+		query: () => `
+      SELECT
+        c.name as name,
+        SUM(p.price * p.stock) as value
+      FROM categories c
+      INNER JOIN products p ON c.id = p.category_id
+      WHERE p.soft_deleted = false
+      GROUP BY c.id, c.name
+      ORDER BY value DESC
+      LIMIT 10
+    `,
+		chartConfig: {
+			dataKey: "value",
+			nameKey: "name",
+		},
+	},
+];
+```
+
+### 4. Done!
+
+Refresh `/dashboard/analytics` → Select the Store tab → Select the Inventory collection → Your new question appears automatically.
+
+---
+
+## Summary Checklist
+
+When adding a new analytics question:
+
+- [ ] **Schema validation**: Verified all tables and columns exist in database
+- [ ] **Check TASKS.md**: Confirmed feature is implemented (if querying feature-specific tables)
+- [ ] SQL query tested in Supabase SQL Editor
+- [ ] Query returns expected column names (`name`, `value` for charts)
+- [ ] Appropriate collection identified (or new collection created)
+- [ ] `QuestionConfig` object created with unique `id`
+- [ ] Added to collection's questions array
+- [ ] `chartConfig` or `metricConfig` provided for visualization type
+- [ ] Date range parameter used if time-based filtering is needed
+- [ ] Question renders without errors in dev environment
+- [ ] Question appears in correct collection tab
+- [ ] Question is searchable by title
+- [ ] Data is meaningful and actionable for business users
+
+---
+
+**Questions or issues?** Check the existing question configs in `components/analytics/tabs/` for reference examples.

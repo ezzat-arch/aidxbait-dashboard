@@ -142,10 +142,19 @@
 
 ## 8. Analytics & Reporting (Cross-Feature)
 
+- [x] Unified analytics dashboard page _(2025-10-24)_
+  - [x] Modular question-based architecture
+  - [x] Four tabs: Store Products, Exercise Programs, Home Visits (coming soon), Online Consultations (coming soon)
+  - [x] Date range filter with URL state persistence
+  - [x] Multiple visualization types (table, bar chart, line chart, pie chart, metric)
+  - [x] Server-side query execution with service role client
+  - [x] Recharts integration for data visualization
+  - [x] 6 insightful Store Products questions
+  - [x] 7 insightful Exercise Programs questions
+  - [x] Developer documentation (@analytics.mdc)
+  - [x] SQL migration for analytics RPC function
 - [ ] Edge Function cron to materialise summary tables
-- [ ] Unified analytics dashboard page
-  - [ ] Switch between Program, Store, Users, Orders metrics
-  - [ ] Export CSV / Print PDF
+- [ ] Export CSV / Print PDF functionality
 - [ ] Realtime charts via Supabase Realtime
 - [ ] Google Data Studio connector _(future)_
 
@@ -159,4 +168,4 @@
 
 ---
 
-_Last updated: 2025-01-21_
+_Last updated: 2025-10-24_

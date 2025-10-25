@@ -69,7 +69,7 @@ export function DashboardSidebar() {
 			href: "/dashboard/analytics",
 			icon: BarChart3,
 			permission: Permission.ViewAnalytics,
-			disabled: true,
+			disabled: false,
 		},
 		{
 			title: "Settings",
