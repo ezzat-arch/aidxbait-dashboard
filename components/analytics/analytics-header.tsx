@@ -83,11 +83,12 @@ export const AnalyticsHeader = ({
 					onValueChange={handleTabChange}
 					className="flex-1"
 				>
-					<TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+					<TabsList className="grid w-full grid-cols-5 lg:w-[700px]">
 						<TabsTrigger value="store">Store</TabsTrigger>
-						<TabsTrigger value="programs">Exercise Programs</TabsTrigger>
+						<TabsTrigger value="ecommerce">E-commerce</TabsTrigger>
+						<TabsTrigger value="programs">Programs</TabsTrigger>
 						<TabsTrigger value="home-visits">Home Visits</TabsTrigger>
-						<TabsTrigger value="consultations">Online Consults</TabsTrigger>
+						<TabsTrigger value="consultations">Consults</TabsTrigger>
 					</TabsList>
 				</Tabs>
 				<Button

@@ -13,7 +13,7 @@ The Analytics Dashboard is a **modular, question-based system** that allows deve
 
 - **Server-side execution**: All queries run in Server Components using service role credentials
 - **RLS bypass**: Analytics queries aggregate across all data (permission-gated at page level)
-- **Multiple visualizations**: Table, Bar Chart, Line Chart, Pie Chart, and Metric cards
+- **Multiple visualizations**: Table, Bar Chart, Line Chart, Donut Chart, and Metric cards
 - **Date filtering**: Shared date-range filter updates all questions in real-time
 - **URL state**: Filter, tab, collection, and search state persisted in URL for shareability
 - **Collections**: Questions organized into logical collections for easy navigation
@@ -33,7 +33,7 @@ components/analytics/
   ├── chart-renderers/
   │   ├── bar-chart-renderer.tsx           # Recharts bar chart wrapper
   │   ├── line-chart-renderer.tsx          # Recharts line chart wrapper
-  │   ├── pie-chart-renderer.tsx           # Recharts pie chart wrapper
+  │   ├── donut-chart-renderer.tsx         # Recharts donut chart wrapper
   │   └── metric-renderer.tsx              # Large number display
   └── tabs/
       ├── store-questions.ts               # Store products collections & questions
@@ -158,7 +158,7 @@ const inventoryQuestions: QuestionConfig[] = [
 		id: "your-unique-question-id", // Unique identifier
 		title: "Your Question Title", // Displayed in card header
 		description: "Brief explanation", // Optional subtitle
-		type: "bar_chart", // "table" | "bar_chart" | "line_chart" | "pie_chart" | "metric"
+		type: "bar_chart", // "table" | "bar_chart" | "line_chart" | "donut_chart" | "metric"
 		query: (dateRange: DateRange) => {
 			// Optional: Use date range in WHERE clause
 			const whereClause =
@@ -259,9 +259,9 @@ Time-series trends.
 }
 ```
 
-#### **Pie Chart**
+#### **Donut Chart**
 
-Proportional segments.
+Proportional segments displayed as a donut/ring chart.
 
 **SQL requirements:**
 
@@ -272,7 +272,7 @@ Proportional segments.
 
 ```typescript
 {
-  type: "pie_chart",
+  type: "donut_chart",
   chartConfig: {
     dataKey: "value",
     nameKey: "name",
@@ -305,7 +305,78 @@ Single large number (e.g., total count).
 }
 ```
 
-### Step 5: Test
+### Step 5: Using CTEs for Complex Queries
+
+For complex analytics that require multiple intermediate calculations, use Common Table Expressions (CTEs) with the `WITH` clause. CTEs make queries more readable and maintainable.
+
+**When to use CTEs:**
+
+- Calculating multiple metrics that depend on each other
+- Breaking down complex logic into logical steps
+- Joining data from multiple intermediate result sets
+- Computing conversion rates, percentages, or ratios
+
+**Example: Conversion Rate with CTEs**
+
+```typescript
+{
+  id: "conversion-rate",
+  title: "Overall Conversion Rate",
+  type: "metric",
+  query: (dateRange: DateRange) => {
+    const whereClause = dateRange.from && dateRange.to
+      ? `WHERE created_at >= '${formatDateForSQL(dateRange.from)}'
+         AND created_at <= '${formatDateForSQL(dateRange.to)}'`
+      : "WHERE created_at >= NOW() - INTERVAL '30 days'";
+
+    return `
+      WITH sessions_with_views AS (
+        SELECT COUNT(DISTINCT session_id) as total_sessions
+        FROM product_views
+        ${whereClause}
+      ),
+      sessions_with_orders AS (
+        SELECT COUNT(DISTINCT session_id) as completed_sessions
+        FROM orders
+        ${whereClause}
+        AND order_status = 'completed'
+      )
+      SELECT
+        ROUND((completed_sessions::DECIMAL / NULLIF(total_sessions, 0)) * 100, 2) as value
+      FROM sessions_with_views, sessions_with_orders
+    `;
+  },
+  metricConfig: {
+    valueKey: "value",
+    label: "Conversion Rate",
+    suffix: "%",
+  }
+}
+```
+
+**CTE Best Practices:**
+
+- Name CTEs descriptively (e.g., `sessions_with_views`, `daily_revenue`)
+- Use CTEs for intermediate calculations that are referenced multiple times
+- Keep individual CTEs focused on a single calculation
+- Comment complex CTE logic for maintainability
+- Test each CTE independently in SQL Editor before combining
+
+**Alternative: Subqueries**
+
+For simpler cases, you can use subqueries instead of CTEs:
+
+```sql
+SELECT
+  (SELECT COUNT(*) FROM products WHERE active = true) as active_products,
+  (SELECT COUNT(*) FROM products WHERE active = false) as inactive_products
+```
+
+Use CTEs when the query becomes harder to read with nested subqueries.
+
+---
+
+### Step 6: Test
 
 1. Start the dev server: `pnpm dev`
 2. Navigate to `/dashboard/analytics`
@@ -387,6 +458,7 @@ The new collection will automatically appear as a new tab within the main tab. N
 
 - **Test queries first**: Use Supabase SQL Editor to validate before adding to code
 - **Comment complex logic**: Explain non-obvious WHERE clauses or JOINs
+- **Use CTEs for complex queries**: Break down multi-step calculations with `WITH` clauses for readability
 - **Consistent naming**: Use `name` and `value` for chart data keys
 - **Descriptive titles**: Question titles should be clear and actionable
 
@@ -397,29 +469,52 @@ The new collection will automatically appear as a new tab within the main tab. N
 The analytics system requires a Postgres function to execute raw SQL. Run this migration in your Supabase SQL Editor:
 
 ```sql
--- Create analytics query execution function
+-- Create analytics query execution function with CTE support
 CREATE OR REPLACE FUNCTION execute_analytics_query(query_text TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   result JSONB;
 BEGIN
+  -- Validate that query is SELECT or WITH (CTE) only (basic security check)
+  -- Both are read-only operations safe for analytics
+  IF query_text !~* '^\s*(SELECT|WITH)' THEN
+    RAISE EXCEPTION 'Only SELECT and WITH (CTE) queries are allowed';
+  END IF;
+
   -- Execute the dynamic query and return results as JSONB
   EXECUTE format('SELECT COALESCE(jsonb_agg(row_to_json(t)), ''[]''::jsonb) FROM (%s) t', query_text)
   INTO result;
 
   RETURN result;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE EXCEPTION 'Query execution failed: %', SQLERRM;
 END;
 $$;
 
 -- Grant execute permission to service role
 GRANT EXECUTE ON FUNCTION execute_analytics_query(TEXT) TO service_role;
+
+-- Add helpful comment
+COMMENT ON FUNCTION execute_analytics_query IS
+  'Executes read-only analytics SQL queries for the admin dashboard.
+   Supports both SELECT and WITH (CTE) queries.
+   MUST be called with service role credentials from Server Components only.
+   Protected by ViewAnalytics permission at application level.';
 ```
 
 **Why is this needed?**
 Supabase doesn't allow arbitrary SQL from the client SDK. This function provides a secure way to execute analytics queries server-side with the service role key.
+
+**Supported Query Types:**
+
+- ✅ Direct SELECT queries: `SELECT * FROM table`
+- ✅ WITH (CTE) queries: `WITH cte AS (...) SELECT ...`
+- ❌ INSERT, UPDATE, DELETE, DROP, etc. (blocked by validation)
 
 ---
 
@@ -515,6 +610,21 @@ After adding a question:
 **Cause**: The `execute_analytics_query` Postgres function doesn't exist.
 
 **Fix**: Run the SQL migration above in your Supabase SQL Editor.
+
+---
+
+### "Only SELECT queries are allowed" (with CTEs)
+
+**Cause**: Older versions of the `execute_analytics_query` function didn't recognize `WITH` clauses (CTEs) as read-only SELECT queries.
+
+**Symptoms**: Queries using `WITH cte AS (...)` fail with error "Only SELECT queries are allowed", even though CTEs are read-only.
+
+**Fix**: Update the database function to allow both SELECT and WITH:
+
+1. Run the updated migration: `supabase-migrations/fix-execute-analytics-query-cte-support.sql`
+2. Or manually update the validation regex in the function from `'^\s*SELECT'` to `'^\s*(SELECT|WITH)'`
+
+**Verification**: After updating, test a CTE query in your analytics dashboard to confirm it works.
 
 ---
 

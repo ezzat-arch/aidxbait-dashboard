@@ -4,6 +4,7 @@ import { Permission } from "@/types/permission-types";
 import { DateRange } from "@/types/analytics-types";
 import { StoreTab } from "@/components/analytics/tabs/store-tab";
 import { ProgramsTab } from "@/components/analytics/tabs/programs-tab";
+import { EcommerceTab } from "@/components/analytics/tabs/ecommerce-tab";
 import { Card, CardContent } from "@/components/ui/card";
 import { Construction } from "lucide-react";
 import { AnalyticsHeader } from "@/components/analytics/analytics-header";
@@ -84,6 +85,16 @@ export default async function AnalyticsPage({
 				{activeTab === "programs" && (
 					<Suspense fallback={<TabLoadingFallback />}>
 						<ProgramsTab
+							dateRange={dateRange}
+							searchQuery={searchQuery}
+							collectionId={collectionId}
+						/>
+					</Suspense>
+				)}
+
+				{activeTab === "ecommerce" && (
+					<Suspense fallback={<TabLoadingFallback />}>
+						<EcommerceTab
 							dateRange={dateRange}
 							searchQuery={searchQuery}
 							collectionId={collectionId}
