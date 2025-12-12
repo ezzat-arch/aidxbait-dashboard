@@ -20,8 +20,11 @@ export const GET = withPermission(
 		const from = (page - 1) * limit;
 		const to = from + limit - 1;
 
-		// Build query
-		let query = supabase.from("users").select("*", { count: "exact" });
+		// Build query - filter out soft-deleted users
+		let query = supabase
+			.from("users")
+			.select("*", { count: "exact" })
+			.eq("is_soft_deleted", false);
 
 		// Apply filters if provided
 		if (search) {
@@ -108,32 +111,4 @@ export const POST = withPermission(
 	}
 );
 
-// Example of a protected DELETE endpoint
-export const DELETE = withPermission(
-	[Permission.DeleteUsers],
-	async (req: NextRequest, context, user) => {
-		const supabase = await createClient();
-
-		try {
-			const { searchParams } = new URL(req.url);
-			const id = searchParams.get("id");
-
-			if (!id) {
-				return NextResponse.json(
-					{ error: "User ID is required" },
-					{ status: 400 }
-				);
-			}
-
-			const { error } = await supabase.from("users").delete().eq("id", id);
-
-			if (error) {
-				return NextResponse.json({ error: error.message }, { status: 500 });
-			}
-
-			return NextResponse.json({ success: true }, { status: 200 });
-		} catch (error) {
-			return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-		}
-	}
-);
+// DELETE endpoint moved to [id]/route.ts for proper RESTful routing

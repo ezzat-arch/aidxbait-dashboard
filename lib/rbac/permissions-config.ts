@@ -41,8 +41,9 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
 export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"GET /api/protected/users": [Permission.ViewUsers],
 	"POST /api/protected/users": [Permission.CreateUsers],
-	"PUT /api/protected/users": [Permission.UpdateUsers],
-	"DELETE /api/protected/users": [Permission.DeleteUsers],
+	"GET /api/protected/users/[id]": [Permission.ViewUsers],
+	"PUT /api/protected/users/[id]": [Permission.UpdateUsers],
+	"DELETE /api/protected/users/[id]": [Permission.DeleteUsers],
 	"GET /api/protected/analytics": [Permission.ViewAnalytics],
 	"GET /api/protected/settings": [Permission.ViewSettings],
 	"PUT /api/protected/settings": [Permission.UpdateSettings],
