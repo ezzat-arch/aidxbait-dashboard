@@ -1,7 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+	MoreHorizontal,
+	Edit,
+	Trash2,
+	Eye,
+	ArrowUpDown,
+	ArrowUp,
+	ArrowDown,
+} from "lucide-react";
+import { SortConfig, sortData, toggleSort } from "@/lib/table-sort";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +47,7 @@ export function UsersTable() {
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalUsers, setTotalUsers] = useState(0);
-	const itemsPerPage = 5;
+	const itemsPerPage = 10;
 
 	// Edit sheet state
 	const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
@@ -52,6 +61,22 @@ export function UsersTable() {
 
 	const { searchQuery, statusFilter, selectedRoles } = useUsersFilter();
 	const { toast } = useToast();
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		column: null,
+		direction: null,
+	});
+
+	const sortedUsers = useMemo(
+		() =>
+			sortData(users, sortConfig, {
+				name: (item) =>
+					[item.first_name, item.last_name].filter(Boolean).join(" ") ||
+					"No name",
+				role: (item) => item.user_type,
+				date: (item) => new Date(item.created_at).getTime(),
+			}),
+		[users, sortConfig]
+	);
 
 	const fetchUsers = useCallback(async () => {
 		setLoading(true);
@@ -72,9 +97,7 @@ export function UsersTable() {
 				params.append("roles", selectedRoles.join(","));
 			}
 
-			const response = await fetch(
-				`/api/protected/users?${params.toString()}`
-			);
+			const response = await fetch(`/api/protected/users?${params.toString()}`);
 
 			if (!response.ok) {
 				throw new Error(`Error fetching users: ${response.statusText}`);
@@ -143,10 +166,58 @@ export function UsersTable() {
 					<Table>
 						<TableHeader>
 							<TableRow>
-								<TableHead>User</TableHead>
-								<TableHead>Role</TableHead>
+								<TableHead
+									className="cursor-pointer select-none hover:bg-muted/50"
+									onClick={() => setSortConfig(toggleSort(sortConfig, "name"))}
+								>
+									<div className="flex items-center gap-1">
+										User
+										{sortConfig.column === "name" ? (
+											sortConfig.direction === "asc" ? (
+												<ArrowUp className="h-4 w-4" />
+											) : (
+												<ArrowDown className="h-4 w-4" />
+											)
+										) : (
+											<ArrowUpDown className="h-4 w-4 opacity-50" />
+										)}
+									</div>
+								</TableHead>
+								<TableHead
+									className="cursor-pointer select-none hover:bg-muted/50"
+									onClick={() => setSortConfig(toggleSort(sortConfig, "role"))}
+								>
+									<div className="flex items-center gap-1">
+										Role
+										{sortConfig.column === "role" ? (
+											sortConfig.direction === "asc" ? (
+												<ArrowUp className="h-4 w-4" />
+											) : (
+												<ArrowDown className="h-4 w-4" />
+											)
+										) : (
+											<ArrowUpDown className="h-4 w-4 opacity-50" />
+										)}
+									</div>
+								</TableHead>
 								<TableHead>Status</TableHead>
-								<TableHead>Last Active</TableHead>
+								<TableHead
+									className="cursor-pointer select-none hover:bg-muted/50"
+									onClick={() => setSortConfig(toggleSort(sortConfig, "date"))}
+								>
+									<div className="flex items-center gap-1">
+										Last Active
+										{sortConfig.column === "date" ? (
+											sortConfig.direction === "asc" ? (
+												<ArrowUp className="h-4 w-4" />
+											) : (
+												<ArrowDown className="h-4 w-4" />
+											)
+										) : (
+											<ArrowUpDown className="h-4 w-4 opacity-50" />
+										)}
+									</div>
+								</TableHead>
 								<TableHead className="w-[80px]"></TableHead>
 							</TableRow>
 						</TableHeader>
@@ -188,9 +259,9 @@ export function UsersTable() {
 										{error}
 									</TableCell>
 								</TableRow>
-							) : users.length > 0 ? (
+							) : sortedUsers.length > 0 ? (
 								// Data state
-								users.map((user) => (
+								sortedUsers.map((user) => (
 									<TableRow key={user.id}>
 										<TableCell>
 											<div className="flex items-center space-x-3">
@@ -250,7 +321,9 @@ export function UsersTable() {
 														</DropdownMenuItem>
 													</PermissionGate>
 
-													<PermissionGate permissions={[Permission.UpdateUsers]}>
+													<PermissionGate
+														permissions={[Permission.UpdateUsers]}
+													>
 														<DropdownMenuItem
 															onClick={() => handleEditClick(user)}
 														>
@@ -259,7 +332,9 @@ export function UsersTable() {
 														</DropdownMenuItem>
 													</PermissionGate>
 
-													<PermissionGate permissions={[Permission.DeleteUsers]}>
+													<PermissionGate
+														permissions={[Permission.DeleteUsers]}
+													>
 														<DropdownMenuSeparator />
 														<DropdownMenuItem
 															className="text-destructive"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
 	Plus,
 	MoreHorizontal,
@@ -9,7 +9,11 @@ import {
 	PlayCircle,
 	Clock,
 	Video as VideoIcon,
+	ArrowUpDown,
+	ArrowUp,
+	ArrowDown,
 } from "lucide-react";
+import { SortConfig, sortData, toggleSort } from "@/lib/table-sort";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -53,8 +57,23 @@ export function ProgramsTab() {
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 	const [showManageVideosModal, setShowManageVideosModal] = useState(false);
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		column: null,
+		direction: null,
+	});
 
 	const { toast } = useToast();
+
+	const sortedPrograms = useMemo(
+		() =>
+			sortData(programs, sortConfig, {
+				title: (item) => item.title,
+				price: (item) => item.price,
+				videos: (item) => item.video_count || 0,
+				duration: (item) => item.total_duration || 0,
+			}),
+		[programs, sortConfig]
+	);
 
 	useEffect(() => {
 		fetchPrograms();
@@ -274,16 +293,88 @@ export function ProgramsTab() {
 								<TableHeader>
 									<TableRow>
 										<TableHead>Thumbnail</TableHead>
-										<TableHead>Title</TableHead>
+										<TableHead
+											className="cursor-pointer select-none hover:bg-muted/50"
+											onClick={() =>
+												setSortConfig(toggleSort(sortConfig, "title"))
+											}
+										>
+											<div className="flex items-center gap-1">
+												Title
+												{sortConfig.column === "title" ? (
+													sortConfig.direction === "asc" ? (
+														<ArrowUp className="h-4 w-4" />
+													) : (
+														<ArrowDown className="h-4 w-4" />
+													)
+												) : (
+													<ArrowUpDown className="h-4 w-4 opacity-50" />
+												)}
+											</div>
+										</TableHead>
 										<TableHead>Joint</TableHead>
-										<TableHead>Price</TableHead>
-										<TableHead>Videos</TableHead>
-										<TableHead>Duration</TableHead>
+										<TableHead
+											className="cursor-pointer select-none hover:bg-muted/50"
+											onClick={() =>
+												setSortConfig(toggleSort(sortConfig, "price"))
+											}
+										>
+											<div className="flex items-center gap-1">
+												Price
+												{sortConfig.column === "price" ? (
+													sortConfig.direction === "asc" ? (
+														<ArrowUp className="h-4 w-4" />
+													) : (
+														<ArrowDown className="h-4 w-4" />
+													)
+												) : (
+													<ArrowUpDown className="h-4 w-4 opacity-50" />
+												)}
+											</div>
+										</TableHead>
+										<TableHead
+											className="cursor-pointer select-none hover:bg-muted/50"
+											onClick={() =>
+												setSortConfig(toggleSort(sortConfig, "videos"))
+											}
+										>
+											<div className="flex items-center gap-1">
+												Videos
+												{sortConfig.column === "videos" ? (
+													sortConfig.direction === "asc" ? (
+														<ArrowUp className="h-4 w-4" />
+													) : (
+														<ArrowDown className="h-4 w-4" />
+													)
+												) : (
+													<ArrowUpDown className="h-4 w-4 opacity-50" />
+												)}
+											</div>
+										</TableHead>
+										<TableHead
+											className="cursor-pointer select-none hover:bg-muted/50"
+											onClick={() =>
+												setSortConfig(toggleSort(sortConfig, "duration"))
+											}
+										>
+											<div className="flex items-center gap-1">
+												Duration
+												{sortConfig.column === "duration" ? (
+													sortConfig.direction === "asc" ? (
+														<ArrowUp className="h-4 w-4" />
+													) : (
+														<ArrowDown className="h-4 w-4" />
+													)
+												) : (
+													<ArrowUpDown className="h-4 w-4 opacity-50" />
+												)}
+											</div>
+										</TableHead>
 										<TableHead className="text-right">Actions</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{programs.map((program) => (
+									{sortedPrograms.map((program) => (
 										<TableRow key={program.id}>
 											<TableCell>
 												<div className="w-16 h-10 rounded overflow-hidden bg-muted flex items-center justify-center">

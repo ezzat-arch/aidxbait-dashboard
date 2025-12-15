@@ -1,7 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Star, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import {
+	Plus,
+	Star,
+	MoreHorizontal,
+	Edit,
+	Trash2,
+	ArrowUpDown,
+	ArrowUp,
+	ArrowDown,
+} from "lucide-react";
+import { SortConfig, sortData, toggleSort } from "@/lib/table-sort";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -41,7 +51,20 @@ export function ReviewsTab() {
 	);
 	const [showBulkDialog, setShowBulkDialog] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		column: null,
+		direction: null,
+	});
 	const { toast } = useToast();
+
+	const sortedReviews = useMemo(
+		() =>
+			sortData(reviews, sortConfig, {
+				rating: (item) => item.rating,
+				date: (item) => new Date(item.created_at).getTime(),
+			}),
+		[reviews, sortConfig]
+	);
 
 	useEffect(() => {
 		fetchReviews();
@@ -141,9 +164,41 @@ export function ReviewsTab() {
 					<TableHeader>
 						<TableRow>
 							<TableHead>Product</TableHead>
-							<TableHead>Rating</TableHead>
+							<TableHead
+								className="cursor-pointer select-none hover:bg-muted/50"
+								onClick={() => setSortConfig(toggleSort(sortConfig, "rating"))}
+							>
+								<div className="flex items-center gap-1">
+									Rating
+									{sortConfig.column === "rating" ? (
+										sortConfig.direction === "asc" ? (
+											<ArrowUp className="h-4 w-4" />
+										) : (
+											<ArrowDown className="h-4 w-4" />
+										)
+									) : (
+										<ArrowUpDown className="h-4 w-4 opacity-50" />
+									)}
+								</div>
+							</TableHead>
 							<TableHead>Comment</TableHead>
-							<TableHead>Date</TableHead>
+							<TableHead
+								className="cursor-pointer select-none hover:bg-muted/50"
+								onClick={() => setSortConfig(toggleSort(sortConfig, "date"))}
+							>
+								<div className="flex items-center gap-1">
+									Date
+									{sortConfig.column === "date" ? (
+										sortConfig.direction === "asc" ? (
+											<ArrowUp className="h-4 w-4" />
+										) : (
+											<ArrowDown className="h-4 w-4" />
+										)
+									) : (
+										<ArrowUpDown className="h-4 w-4 opacity-50" />
+									)}
+								</div>
+							</TableHead>
 							<TableHead className="w-[50px]"></TableHead>
 						</TableRow>
 					</TableHeader>
@@ -168,8 +223,8 @@ export function ReviewsTab() {
 									</TableCell>
 								</TableRow>
 							))
-						) : reviews.length > 0 ? (
-							reviews.map((review) => (
+						) : sortedReviews.length > 0 ? (
+							sortedReviews.map((review) => (
 								<TableRow key={review.id}>
 									<TableCell className="font-medium">
 										{/* Product name would be fetched with review */}

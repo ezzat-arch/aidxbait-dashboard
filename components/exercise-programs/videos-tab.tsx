@@ -12,7 +12,11 @@ import {
 	Search,
 	Filter,
 	X,
+	ArrowUpDown,
+	ArrowUp,
+	ArrowDown,
 } from "lucide-react";
+import { SortConfig, sortData, toggleSort } from "@/lib/table-sort";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -63,6 +67,10 @@ export function VideosTab() {
 	// Filter and search states
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		column: null,
+		direction: null,
+	});
 
 	const { toast } = useToast();
 
@@ -102,8 +110,18 @@ export function VideosTab() {
 			);
 		}
 
-		// Sort by code alphabetically
-		filtered.sort((a, b) => a.code.localeCompare(b.code));
+		// Apply column sorting if set, otherwise sort by code
+		if (sortConfig.column && sortConfig.direction) {
+			filtered = sortData(filtered, sortConfig, {
+				title: (item) => item.title,
+				duration: (item) => item.duration,
+				size: (item) => item.size_mb,
+				code: (item) => item.code,
+			});
+		} else {
+			// Default sort by code alphabetically
+			filtered = [...filtered].sort((a, b) => a.code.localeCompare(b.code));
+		}
 
 		// Group by category
 		const grouped: GroupedVideos = filtered.reduce((acc, video) => {
@@ -126,7 +144,7 @@ export function VideosTab() {
 			filteredVideos: filtered,
 			groupedVideos: sortedGrouped,
 		};
-	}, [videos, selectedCategories, searchQuery]);
+	}, [videos, selectedCategories, searchQuery, sortConfig]);
 
 	const fetchVideos = async () => {
 		try {
@@ -455,10 +473,84 @@ export function VideosTab() {
 											<Table>
 												<TableHeader>
 													<TableRow>
-														<TableHead>Title</TableHead>
-														<TableHead>Duration</TableHead>
-														<TableHead>Size</TableHead>
-														<TableHead>Code</TableHead>
+														<TableHead
+															className="cursor-pointer select-none hover:bg-muted/50"
+															onClick={() =>
+																setSortConfig(toggleSort(sortConfig, "title"))
+															}
+														>
+															<div className="flex items-center gap-1">
+																Title
+																{sortConfig.column === "title" ? (
+																	sortConfig.direction === "asc" ? (
+																		<ArrowUp className="h-4 w-4" />
+																	) : (
+																		<ArrowDown className="h-4 w-4" />
+																	)
+																) : (
+																	<ArrowUpDown className="h-4 w-4 opacity-50" />
+																)}
+															</div>
+														</TableHead>
+														<TableHead
+															className="cursor-pointer select-none hover:bg-muted/50"
+															onClick={() =>
+																setSortConfig(
+																	toggleSort(sortConfig, "duration")
+																)
+															}
+														>
+															<div className="flex items-center gap-1">
+																Duration
+																{sortConfig.column === "duration" ? (
+																	sortConfig.direction === "asc" ? (
+																		<ArrowUp className="h-4 w-4" />
+																	) : (
+																		<ArrowDown className="h-4 w-4" />
+																	)
+																) : (
+																	<ArrowUpDown className="h-4 w-4 opacity-50" />
+																)}
+															</div>
+														</TableHead>
+														<TableHead
+															className="cursor-pointer select-none hover:bg-muted/50"
+															onClick={() =>
+																setSortConfig(toggleSort(sortConfig, "size"))
+															}
+														>
+															<div className="flex items-center gap-1">
+																Size
+																{sortConfig.column === "size" ? (
+																	sortConfig.direction === "asc" ? (
+																		<ArrowUp className="h-4 w-4" />
+																	) : (
+																		<ArrowDown className="h-4 w-4" />
+																	)
+																) : (
+																	<ArrowUpDown className="h-4 w-4 opacity-50" />
+																)}
+															</div>
+														</TableHead>
+														<TableHead
+															className="cursor-pointer select-none hover:bg-muted/50"
+															onClick={() =>
+																setSortConfig(toggleSort(sortConfig, "code"))
+															}
+														>
+															<div className="flex items-center gap-1">
+																Code
+																{sortConfig.column === "code" ? (
+																	sortConfig.direction === "asc" ? (
+																		<ArrowUp className="h-4 w-4" />
+																	) : (
+																		<ArrowDown className="h-4 w-4" />
+																	)
+																) : (
+																	<ArrowUpDown className="h-4 w-4 opacity-50" />
+																)}
+															</div>
+														</TableHead>
 														<TableHead className="text-right">
 															Actions
 														</TableHead>

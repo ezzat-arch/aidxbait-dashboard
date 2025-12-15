@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
 	Table,
 	TableBody,
@@ -9,6 +9,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { SortConfig, sortData, toggleSort } from "@/lib/table-sort";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -42,6 +43,9 @@ import {
 	Calendar,
 	User,
 	CreditCard,
+	ArrowUpDown,
+	ArrowUp,
+	ArrowDown,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -72,8 +76,22 @@ export function SubscriptionTable({ filters }: SubscriptionTableProps) {
 	const [showEditDialog, setShowEditDialog] = useState(false);
 	const [showCancelDialog, setShowCancelDialog] = useState(false);
 	const [showViewDialog, setShowViewDialog] = useState(false);
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		column: null,
+		direction: null,
+	});
 
 	const itemsPerPage = 10;
+
+	const sortedSubscriptions = useMemo(
+		() =>
+			sortData(subscriptions, sortConfig, {
+				patient: (item) => item.patient.name,
+				program: (item) => item.program.name,
+				period: (item) => new Date(item.start_date).getTime(),
+			}),
+		[subscriptions, sortConfig]
+	);
 
 	// Load subscriptions data
 	useEffect(() => {
@@ -223,16 +241,70 @@ export function SubscriptionTable({ filters }: SubscriptionTableProps) {
 								<Table>
 									<TableHeader>
 										<TableRow>
-											<TableHead>Patient</TableHead>
-											<TableHead>Program</TableHead>
+											<TableHead
+												className="cursor-pointer select-none hover:bg-muted/50"
+												onClick={() =>
+													setSortConfig(toggleSort(sortConfig, "patient"))
+												}
+											>
+												<div className="flex items-center gap-1">
+													Patient
+													{sortConfig.column === "patient" ? (
+														sortConfig.direction === "asc" ? (
+															<ArrowUp className="h-4 w-4" />
+														) : (
+															<ArrowDown className="h-4 w-4" />
+														)
+													) : (
+														<ArrowUpDown className="h-4 w-4 opacity-50" />
+													)}
+												</div>
+											</TableHead>
+											<TableHead
+												className="cursor-pointer select-none hover:bg-muted/50"
+												onClick={() =>
+													setSortConfig(toggleSort(sortConfig, "program"))
+												}
+											>
+												<div className="flex items-center gap-1">
+													Program
+													{sortConfig.column === "program" ? (
+														sortConfig.direction === "asc" ? (
+															<ArrowUp className="h-4 w-4" />
+														) : (
+															<ArrowDown className="h-4 w-4" />
+														)
+													) : (
+														<ArrowUpDown className="h-4 w-4 opacity-50" />
+													)}
+												</div>
+											</TableHead>
 											<TableHead>Payment</TableHead>
 											<TableHead>Status</TableHead>
-											<TableHead>Period</TableHead>
+											<TableHead
+												className="cursor-pointer select-none hover:bg-muted/50"
+												onClick={() =>
+													setSortConfig(toggleSort(sortConfig, "period"))
+												}
+											>
+												<div className="flex items-center gap-1">
+													Period
+													{sortConfig.column === "period" ? (
+														sortConfig.direction === "asc" ? (
+															<ArrowUp className="h-4 w-4" />
+														) : (
+															<ArrowDown className="h-4 w-4" />
+														)
+													) : (
+														<ArrowUpDown className="h-4 w-4 opacity-50" />
+													)}
+												</div>
+											</TableHead>
 											<TableHead>Actions</TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{subscriptions.map((subscription) => (
+										{sortedSubscriptions.map((subscription) => (
 											<TableRow key={subscription.id}>
 												<TableCell>
 													<div className="flex items-center space-x-3">

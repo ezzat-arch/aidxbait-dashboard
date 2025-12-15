@@ -1,7 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import {
+	Plus,
+	MoreHorizontal,
+	Edit,
+	Trash2,
+	ArrowUpDown,
+	ArrowUp,
+	ArrowDown,
+} from "lucide-react";
+import { SortConfig, sortData, toggleSort } from "@/lib/table-sort";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -40,7 +49,20 @@ export function JointsTab() {
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showEditDialog, setShowEditDialog] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		column: null,
+		direction: null,
+	});
 	const { toast } = useToast();
+
+	const sortedJoints = useMemo(
+		() =>
+			sortData(joints, sortConfig, {
+				name: (item) => item.name,
+				name_ar: (item) => item.name_ar,
+			}),
+		[joints, sortConfig]
+	);
 
 	useEffect(() => {
 		fetchJoints();
@@ -173,8 +195,40 @@ export function JointsTab() {
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead className="text-center">Name (English)</TableHead>
-							<TableHead className="text-center">Name (Arabic)</TableHead>
+							<TableHead
+								className="text-center cursor-pointer select-none hover:bg-muted/50"
+								onClick={() => setSortConfig(toggleSort(sortConfig, "name"))}
+							>
+								<div className="flex items-center justify-center gap-1">
+									Name (English)
+									{sortConfig.column === "name" ? (
+										sortConfig.direction === "asc" ? (
+											<ArrowUp className="h-4 w-4" />
+										) : (
+											<ArrowDown className="h-4 w-4" />
+										)
+									) : (
+										<ArrowUpDown className="h-4 w-4 opacity-50" />
+									)}
+								</div>
+							</TableHead>
+							<TableHead
+								className="text-center cursor-pointer select-none hover:bg-muted/50"
+								onClick={() => setSortConfig(toggleSort(sortConfig, "name_ar"))}
+							>
+								<div className="flex items-center justify-center gap-1">
+									Name (Arabic)
+									{sortConfig.column === "name_ar" ? (
+										sortConfig.direction === "asc" ? (
+											<ArrowUp className="h-4 w-4" />
+										) : (
+											<ArrowDown className="h-4 w-4" />
+										)
+									) : (
+										<ArrowUpDown className="h-4 w-4 opacity-50" />
+									)}
+								</div>
+							</TableHead>
 							<TableHead className="w-[50px]"></TableHead>
 						</TableRow>
 					</TableHeader>
@@ -193,8 +247,8 @@ export function JointsTab() {
 									</TableCell>
 								</TableRow>
 							))
-						) : joints.length > 0 ? (
-							joints.map((joint) => (
+						) : sortedJoints.length > 0 ? (
+							sortedJoints.map((joint) => (
 								<TableRow key={joint.id}>
 									<TableCell className="font-medium text-center">
 										{joint.name}

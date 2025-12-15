@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
 	MoreHorizontal,
 	Eye,
@@ -9,7 +9,11 @@ import {
 	Copy,
 	Package,
 	CheckCircle,
+	ArrowUpDown,
+	ArrowUp,
+	ArrowDown,
 } from "lucide-react";
+import { SortConfig, sortData, toggleSort } from "@/lib/table-sort";
 import {
 	Table,
 	TableBody,
@@ -70,8 +74,23 @@ export function OrdersTable({ filters, onOrderUpdate }: OrdersTableProps) {
 	const [showDetailsSheet, setShowDetailsSheet] = useState(false);
 	const [showStatusDialog, setShowStatusDialog] = useState(false);
 	const [showCancelDialog, setShowCancelDialog] = useState(false);
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		column: null,
+		direction: null,
+	});
 
 	const { toast } = useToast();
+
+	const sortedOrders = useMemo(
+		() =>
+			sortData(orders, sortConfig, {
+				id: (item) => item.id,
+				date: (item) => new Date(item.order_date).getTime(),
+				total: (item) => item.total_amount,
+				status: (item) => item.order_status,
+			}),
+		[orders, sortConfig]
+	);
 
 	useEffect(() => {
 		fetchOrders();
@@ -243,13 +262,79 @@ export function OrdersTable({ filters, onOrderUpdate }: OrdersTableProps) {
 					<Table>
 						<TableHeader>
 							<TableRow>
-								<TableHead>Order ID</TableHead>
+								<TableHead
+									className="cursor-pointer select-none hover:bg-muted/50"
+									onClick={() => setSortConfig(toggleSort(sortConfig, "id"))}
+								>
+									<div className="flex items-center gap-1">
+										Order ID
+										{sortConfig.column === "id" ? (
+											sortConfig.direction === "asc" ? (
+												<ArrowUp className="h-4 w-4" />
+											) : (
+												<ArrowDown className="h-4 w-4" />
+											)
+										) : (
+											<ArrowUpDown className="h-4 w-4 opacity-50" />
+										)}
+									</div>
+								</TableHead>
 								<TableHead>Patient</TableHead>
-								<TableHead>Date</TableHead>
+								<TableHead
+									className="cursor-pointer select-none hover:bg-muted/50"
+									onClick={() => setSortConfig(toggleSort(sortConfig, "date"))}
+								>
+									<div className="flex items-center gap-1">
+										Date
+										{sortConfig.column === "date" ? (
+											sortConfig.direction === "asc" ? (
+												<ArrowUp className="h-4 w-4" />
+											) : (
+												<ArrowDown className="h-4 w-4" />
+											)
+										) : (
+											<ArrowUpDown className="h-4 w-4 opacity-50" />
+										)}
+									</div>
+								</TableHead>
 								<TableHead>Type</TableHead>
-								<TableHead>Total</TableHead>
+								<TableHead
+									className="cursor-pointer select-none hover:bg-muted/50"
+									onClick={() => setSortConfig(toggleSort(sortConfig, "total"))}
+								>
+									<div className="flex items-center gap-1">
+										Total
+										{sortConfig.column === "total" ? (
+											sortConfig.direction === "asc" ? (
+												<ArrowUp className="h-4 w-4" />
+											) : (
+												<ArrowDown className="h-4 w-4" />
+											)
+										) : (
+											<ArrowUpDown className="h-4 w-4 opacity-50" />
+										)}
+									</div>
+								</TableHead>
 								<TableHead>Payment</TableHead>
-								<TableHead>Status</TableHead>
+								<TableHead
+									className="cursor-pointer select-none hover:bg-muted/50"
+									onClick={() =>
+										setSortConfig(toggleSort(sortConfig, "status"))
+									}
+								>
+									<div className="flex items-center gap-1">
+										Status
+										{sortConfig.column === "status" ? (
+											sortConfig.direction === "asc" ? (
+												<ArrowUp className="h-4 w-4" />
+											) : (
+												<ArrowDown className="h-4 w-4" />
+											)
+										) : (
+											<ArrowUpDown className="h-4 w-4 opacity-50" />
+										)}
+									</div>
+								</TableHead>
 								<TableHead>Items</TableHead>
 								<TableHead className="w-[80px]"></TableHead>
 							</TableRow>
@@ -297,8 +382,8 @@ export function OrdersTable({ filters, onOrderUpdate }: OrdersTableProps) {
 										</TableCell>
 									</TableRow>
 								))
-							) : orders.length > 0 ? (
-								orders.map((order) => (
+							) : sortedOrders.length > 0 ? (
+								sortedOrders.map((order) => (
 									<TableRow key={order.id}>
 										{/* Order ID with Paymob tooltip */}
 										<TableCell>

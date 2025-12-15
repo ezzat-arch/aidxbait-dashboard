@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
 	Plus,
 	MoreHorizontal,
@@ -9,7 +9,11 @@ import {
 	Package,
 	Eye,
 	Star,
+	ArrowUpDown,
+	ArrowUp,
+	ArrowDown,
 } from "lucide-react";
+import { SortConfig, sortData, toggleSort } from "@/lib/table-sort";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -68,8 +72,22 @@ export function ProductsTab() {
 	const [productDetails, setProductDetails] =
 		useState<ProductWithDetails | null>(null);
 	const [detailsLoading, setDetailsLoading] = useState(false);
+	const [sortConfig, setSortConfig] = useState<SortConfig>({
+		column: null,
+		direction: null,
+	});
 
 	const { toast } = useToast();
+
+	const sortedProducts = useMemo(
+		() =>
+			sortData(products, sortConfig, {
+				name: (item) => item.name,
+				price: (item) => item.price,
+				stock: (item) => item.stock,
+			}),
+		[products, sortConfig]
+	);
 
 	useEffect(() => {
 		fetchProducts();
@@ -207,9 +225,57 @@ export function ProductsTab() {
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead>Product</TableHead>
-							<TableHead>Price</TableHead>
-							<TableHead>Stock</TableHead>
+							<TableHead
+								className="cursor-pointer select-none hover:bg-muted/50"
+								onClick={() => setSortConfig(toggleSort(sortConfig, "name"))}
+							>
+								<div className="flex items-center gap-1">
+									Product
+									{sortConfig.column === "name" ? (
+										sortConfig.direction === "asc" ? (
+											<ArrowUp className="h-4 w-4" />
+										) : (
+											<ArrowDown className="h-4 w-4" />
+										)
+									) : (
+										<ArrowUpDown className="h-4 w-4 opacity-50" />
+									)}
+								</div>
+							</TableHead>
+							<TableHead
+								className="cursor-pointer select-none hover:bg-muted/50"
+								onClick={() => setSortConfig(toggleSort(sortConfig, "price"))}
+							>
+								<div className="flex items-center gap-1">
+									Price
+									{sortConfig.column === "price" ? (
+										sortConfig.direction === "asc" ? (
+											<ArrowUp className="h-4 w-4" />
+										) : (
+											<ArrowDown className="h-4 w-4" />
+										)
+									) : (
+										<ArrowUpDown className="h-4 w-4 opacity-50" />
+									)}
+								</div>
+							</TableHead>
+							<TableHead
+								className="cursor-pointer select-none hover:bg-muted/50"
+								onClick={() => setSortConfig(toggleSort(sortConfig, "stock"))}
+							>
+								<div className="flex items-center gap-1">
+									Stock
+									{sortConfig.column === "stock" ? (
+										sortConfig.direction === "asc" ? (
+											<ArrowUp className="h-4 w-4" />
+										) : (
+											<ArrowDown className="h-4 w-4" />
+										)
+									) : (
+										<ArrowUpDown className="h-4 w-4 opacity-50" />
+									)}
+								</div>
+							</TableHead>
 							<TableHead>Status</TableHead>
 							<TableHead className="w-[50px]"></TableHead>
 						</TableRow>
@@ -244,8 +310,8 @@ export function ProductsTab() {
 									</TableCell>
 								</TableRow>
 							))
-						) : products.length > 0 ? (
-							products.map((product) => (
+						) : sortedProducts.length > 0 ? (
+							sortedProducts.map((product) => (
 								<TableRow key={product.id}>
 									<TableCell>
 										<div className="flex items-center space-x-3">
