@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { SortConfig, sortData, toggleSort } from "@/lib/table-sort";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,
@@ -38,25 +37,25 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast, useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { PermissionGate } from "@/components/rbac/permission-gate";
 import { Permission } from "@/types/permission-types";
 import { DeleteConfirmDialog } from "@/components/store/delete-confirm-dialog";
 import { ProgramFormDialog } from "./program-form-dialog";
-import { ProgramVideosModal } from "./program-videos-modal";
-import type { ProgramWithVideos, Video } from "@/types/exercise-program-types";
+import { ProgramExercisesModal } from "./program-exercises-modal";
+import type { ProgramWithExercises } from "@/types/exercise-program-types";
 import { formatDuration } from "@/types/exercise-program-types";
 
 export function ProgramsTab() {
-	const [programs, setPrograms] = useState<ProgramWithVideos[]>([]);
-	const [videos, setVideos] = useState<Video[]>([]);
+	const [programs, setPrograms] = useState<ProgramWithExercises[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [selectedProgram, setSelectedProgram] =
-		useState<ProgramWithVideos | null>(null);
+		useState<ProgramWithExercises | null>(null);
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-	const [showManageVideosModal, setShowManageVideosModal] = useState(false);
+	const [showManageExercisesModal, setShowManageExercisesModal] =
+		useState(false);
 	const [sortConfig, setSortConfig] = useState<SortConfig>({
 		column: null,
 		direction: null,
@@ -69,7 +68,7 @@ export function ProgramsTab() {
 			sortData(programs, sortConfig, {
 				title: (item) => item.title,
 				price: (item) => item.price,
-				videos: (item) => item.video_count || 0,
+				exercises: (item) => item.exercise_count || 0,
 				duration: (item) => item.total_duration || 0,
 			}),
 		[programs, sortConfig]
@@ -77,7 +76,6 @@ export function ProgramsTab() {
 
 	useEffect(() => {
 		fetchPrograms();
-		fetchAllVideos();
 	}, []);
 
 	const fetchPrograms = async () => {
@@ -95,17 +93,6 @@ export function ProgramsTab() {
 			});
 		} finally {
 			setLoading(false);
-		}
-	};
-
-	const fetchAllVideos = async () => {
-		try {
-			const response = await fetch("/api/protected/exercise-programs/videos");
-			if (!response.ok) throw new Error("Failed to fetch videos");
-			const result = await response.json();
-			setVideos(result.data);
-		} catch (error) {
-			console.error("Failed to fetch videos:", error);
 		}
 	};
 
@@ -214,19 +201,19 @@ export function ProgramsTab() {
 		}
 	};
 
-	const openEditModal = (program: ProgramWithVideos) => {
+	const openEditModal = (program: ProgramWithExercises) => {
 		setSelectedProgram(program);
 		setShowEditModal(true);
 	};
 
-	const openDeleteDialog = (program: ProgramWithVideos) => {
+	const openDeleteDialog = (program: ProgramWithExercises) => {
 		setSelectedProgram(program);
 		setShowDeleteDialog(true);
 	};
 
-	const openManageVideosModal = (program: ProgramWithVideos) => {
+	const openManageExercisesModal = (program: ProgramWithExercises) => {
 		setSelectedProgram(program);
-		setShowManageVideosModal(true);
+		setShowManageExercisesModal(true);
 	};
 
 	if (loading) {
@@ -335,12 +322,12 @@ export function ProgramsTab() {
 										<TableHead
 											className="cursor-pointer select-none hover:bg-muted/50"
 											onClick={() =>
-												setSortConfig(toggleSort(sortConfig, "videos"))
+												setSortConfig(toggleSort(sortConfig, "exercises"))
 											}
 										>
 											<div className="flex items-center gap-1">
-												Videos
-												{sortConfig.column === "videos" ? (
+												Exercises
+												{sortConfig.column === "exercises" ? (
 													sortConfig.direction === "asc" ? (
 														<ArrowUp className="h-4 w-4" />
 													) : (
@@ -416,7 +403,7 @@ export function ProgramsTab() {
 											<TableCell>
 												<div className="flex items-center gap-1">
 													<VideoIcon className="h-3 w-3" />
-													{program.video_count || 0}
+													{program.exercise_count || 0}
 												</div>
 											</TableCell>
 											<TableCell>
@@ -439,10 +426,12 @@ export function ProgramsTab() {
 															permissions={[Permission.UpdateExercisePrograms]}
 														>
 															<DropdownMenuItem
-																onClick={() => openManageVideosModal(program)}
+																onClick={() =>
+																	openManageExercisesModal(program)
+																}
 															>
 																<VideoIcon className="h-4 w-4 mr-2" />
-																Manage Videos
+																Manage Exercises
 															</DropdownMenuItem>
 															<DropdownMenuItem
 																onClick={() => openEditModal(program)}
@@ -494,14 +483,12 @@ export function ProgramsTab() {
 				isEdit={true}
 			/>
 
-			{/* Manage Videos Modal */}
-			<ProgramVideosModal
-				open={showManageVideosModal}
-				onOpenChange={setShowManageVideosModal}
+			{/* Manage Exercises Modal */}
+			<ProgramExercisesModal
+				open={showManageExercisesModal}
+				onOpenChange={setShowManageExercisesModal}
 				program={selectedProgram}
-				onVideoAdded={fetchPrograms}
-				onVideoRemoved={fetchPrograms}
-				onVideoReordered={fetchPrograms}
+				onExerciseChanged={fetchPrograms}
 			/>
 
 			{/* Delete Confirmation Dialog */}
@@ -512,7 +499,7 @@ export function ProgramsTab() {
 				title="Delete Program"
 				description={
 					selectedProgram
-						? `Are you sure you want to delete "${selectedProgram.title}"? This will also remove all video assignments from this program. This action cannot be undone.`
+						? `Are you sure you want to delete "${selectedProgram.title}"? This will also remove all exercises from this program. This action cannot be undone.`
 						: ""
 				}
 			/>

@@ -40,35 +40,44 @@ const handleGetPrograms = withPermission(
 				});
 			}
 
-			// Then, fetch video data for each program
+			// Then, fetch exercise data for each program from program_exercises
 			const processedPrograms = await Promise.all(
 				programs.map(async (program) => {
-					// Get program videos with video details
-					const { data: programVideos, error: videosError } = await supabase
-						.from("program_videos")
-						.select(
-							`
+					// Get program exercises with video details
+					const { data: programExercises, error: exercisesError } =
+						await supabase
+							.from("program_exercises")
+							.select(
+								`
 							video_id,
-							sort_order,
+							display_order,
 							videos(id, duration, soft_deleted)
 						`
-						)
-						.eq("program_id", program.id)
-						.order("sort_order", { ascending: true });
+							)
+							.eq("program_id", program.id)
+							.order("start_week", { ascending: true })
+							.order("display_order", { ascending: true });
 
-					// Handle videos error gracefully - program might have no videos
-					if (videosError && videosError.code !== "PGRST116") {
+					// Handle error gracefully - program might have no exercises
+					if (exercisesError && exercisesError.code !== "PGRST116") {
 						console.error(
-							"Error fetching videos for program:",
+							"Error fetching exercises for program:",
 							program.id,
-							videosError
+							exercisesError
 						);
 					}
 
-					// Filter out soft deleted videos
-					const activeVideos = (programVideos || [])
-						.filter((pv: any) => pv.videos && !pv.videos.soft_deleted)
-						.map((pv: any) => pv.videos);
+					// Filter out soft deleted videos and get unique videos
+					const seenVideoIds = new Set<number>();
+					const activeVideos = (programExercises || [])
+						.filter((pe: any) => {
+							if (!pe.videos || pe.videos.soft_deleted) return false;
+							// Track unique videos for duration calculation
+							if (seenVideoIds.has(pe.videos.id)) return false;
+							seenVideoIds.add(pe.videos.id);
+							return true;
+						})
+						.map((pe: any) => pe.videos);
 
 					const totalDuration = activeVideos.reduce(
 						(sum: number, video: any) => sum + (video.duration || 0),
@@ -77,7 +86,7 @@ const handleGetPrograms = withPermission(
 
 					return {
 						...program,
-						video_count: activeVideos.length,
+						exercise_count: (programExercises || []).length,
 						total_duration: totalDuration,
 					};
 				})

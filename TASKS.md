@@ -39,7 +39,8 @@
 
 - [x] Create `programs`
 - [x] Create `videos`
-- [x] Create `program_videos`
+- [x] Create `program_videos` _(deprecated)_
+- [x] Create `program_exercises` _(new - replaces program_videos with week ranges, volume, notes)_
 - [x] Create `user_programs`
 - [x] Create `exercise_program_subscriptions`
 - [x] Create CRON job to expire subscriptions
@@ -48,7 +49,8 @@
 
 - [x] List & Create programs (`route.ts`)
 - [x] Read / Update / Delete a single program (`[id]/route.ts`)
-- [x] Nested Videos CRUD (`[programId]/videos/**`)
+- [x] Nested Videos CRUD (`[programId]/videos/**`) _(deprecated)_
+- [x] Program Exercises CRUD (`[programId]/exercises/**`) _(new - with week ranges, volume, bilingual notes)_
 - [x] Subscriptions CRUD (`/subscriptions/**`)
 - [ ] Program analytics endpoint (`/analytics/programs/**`)
 
@@ -61,7 +63,12 @@
 
 - [x] Programs table with filters & search
 - [x] `ProgramForm` dialog (title/description/thumbnail/price)
-- [x] Drag-and-drop `VideoList` reorder & inline edit
+- [x] Drag-and-drop `VideoList` reorder & inline edit _(deprecated)_
+- [x] Program Exercises modal with week-grouped table view _(new - 2025-12-21)_
+  - [x] Exercise form with volume toggle (sets/reps vs hold duration)
+  - [x] Bilingual notes support (English/Arabic)
+  - [x] Week range configuration (start_week, end_week)
+  - [x] Collapsible week groups for organized display
 - [x] Subscriptions tab with cancel/renew actions
 - [ ] Charts: completion %, average watch time, active subscriptions
 
@@ -168,4 +175,4 @@
 
 ---
 
-_Last updated: 2025-10-24_
+_Last updated: 2025-12-21_

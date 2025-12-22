@@ -11,17 +11,25 @@ export interface NumericInputProps
 	> {
 	value?: number | string;
 	onChange?: (value: number) => void;
+	onValueChange?: (value: number | string) => void;
 	allowDecimals?: boolean;
 }
 
 const NumericInput = React.forwardRef<HTMLInputElement, NumericInputProps>(
 	(
-		{ className, value = "", onChange, allowDecimals = false, ...props },
+		{
+			className,
+			value = "",
+			onChange,
+			onValueChange,
+			allowDecimals = false,
+			...props
+		},
 		ref
 	) => {
 		// Convert number to string for display
 		const displayValue = React.useMemo(() => {
-			if (value === "" || value === 0) return "";
+			if (value === "" || value === undefined || value === null) return "";
 			return value.toString();
 		}, [value]);
 
@@ -30,6 +38,7 @@ const NumericInput = React.forwardRef<HTMLInputElement, NumericInputProps>(
 
 			// Allow empty string
 			if (inputValue === "") {
+				onValueChange?.("");
 				onChange?.(0);
 				return;
 			}
@@ -40,7 +49,11 @@ const NumericInput = React.forwardRef<HTMLInputElement, NumericInputProps>(
 				const numericValue = allowDecimals
 					? parseFloat(inputValue)
 					: parseInt(inputValue);
-				// Only call onChange if the value is a valid number
+
+				// Call new handler with raw value (preserves "0." or "1.")
+				onValueChange?.(inputValue);
+
+				// Only call legacy onChange if the value is a valid number
 				if (!isNaN(numericValue)) {
 					onChange?.(numericValue);
 				} else if (allowDecimals && inputValue === ".") {

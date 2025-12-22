@@ -8,13 +8,17 @@ import {
 export const ROLE_PERMISSIONS: RolePermissions = {
 	[Role.Superuser]: Object.values(Permission), // Superusers have all permissions
 	[Role.Admin]: [
-		// Store - Full CRUD access (ONLY permission for admins)
+		// Store - Full CRUD access
 		Permission.ViewStore,
 		Permission.CreateStoreItems,
 		Permission.UpdateStoreItems,
 		Permission.DeleteStoreItems,
-		// Note: Admins ONLY have access to the store tab
-		// No access to: users, settings, audit logs, exercise programs, or subscriptions
+		// Exercise Programs - Full CRUD access
+		Permission.ViewExercisePrograms,
+		Permission.CreateExercisePrograms,
+		Permission.UpdateExercisePrograms,
+		Permission.DeleteExercisePrograms,
+		Permission.ManageVideos,
 	],
 	[Role.Therapist]: [],
 	[Role.Consultant]: [],
@@ -84,6 +88,19 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"DELETE /api/protected/exercise-programs/joints": [
 		Permission.DeleteExercisePrograms,
 	],
+
+	// Program Exercises API permissions (new program_exercises table)
+	"GET /api/protected/exercise-programs/programs/[id]/exercises": [
+		Permission.ViewExercisePrograms,
+	],
+	"POST /api/protected/exercise-programs/programs/[id]/exercises": [
+		Permission.UpdateExercisePrograms,
+	],
+	"PUT /api/protected/exercise-programs/programs/[id]/exercises/[exerciseId]": [
+		Permission.UpdateExercisePrograms,
+	],
+	"DELETE /api/protected/exercise-programs/programs/[id]/exercises/[exerciseId]":
+		[Permission.UpdateExercisePrograms],
 
 	// Program Subscriptions API permissions
 	"GET /api/protected/exercise-programs/subscriptions": [
