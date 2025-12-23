@@ -49,6 +49,7 @@ import { PermissionGate } from "@/components/rbac/permission-gate";
 import { Permission } from "@/types/permission-types";
 import { DeleteConfirmDialog } from "@/components/store/delete-confirm-dialog";
 import { VideoFormDialog } from "./video-form-dialog";
+import { VideoPreviewSidebar } from "./video-preview-sidebar";
 import type { Video } from "@/types/exercise-program-types";
 import { formatDuration } from "@/types/exercise-program-types";
 
@@ -63,6 +64,9 @@ export function VideosTab() {
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+	// Preview sidebar state (split-screen)
+	const [previewVideo, setPreviewVideo] = useState<Video | null>(null);
 
 	// Filter and search states
 	const [searchQuery, setSearchQuery] = useState("");
@@ -276,6 +280,14 @@ export function VideosTab() {
 		setShowDeleteDialog(true);
 	};
 
+	const openPreviewSidebar = (video: Video) => {
+		setPreviewVideo(video);
+	};
+
+	const closePreviewSidebar = () => {
+		setPreviewVideo(null);
+	};
+
 	const formatFileSize = (sizeInMB: number): string => {
 		if (sizeInMB < 1024) {
 			return `${sizeInMB.toFixed(1)} MB`;
@@ -321,27 +333,31 @@ export function VideosTab() {
 
 	return (
 		<>
-			<Card>
-				<CardHeader>
-					<div className="flex items-center justify-between">
-						<div>
-							<CardTitle className="flex items-center gap-2">
-								<FileVideo className="h-5 w-5" />
-								Videos ({filteredVideos.length})
-							</CardTitle>
-							<CardDescription>
-								Manage exercise videos and their content
-							</CardDescription>
-						</div>
-						<PermissionGate permissions={[Permission.ManageVideos]}>
-							<Button onClick={() => setShowCreateModal(true)}>
-								<Plus className="h-4 w-4 mr-2" />
-								Add Video
-							</Button>
-						</PermissionGate>
-					</div>
-				</CardHeader>
-				<CardContent>
+			{/* Split-screen container */}
+			<div className="flex h-full">
+				{/* Main content area */}
+				<div className={`flex-1 min-w-0 transition-all duration-300 ${previewVideo ? "lg:pr-0" : ""}`}>
+					<Card className="h-full">
+						<CardHeader>
+							<div className="flex items-center justify-between">
+								<div>
+									<CardTitle className="flex items-center gap-2">
+										<FileVideo className="h-5 w-5" />
+										Videos ({filteredVideos.length})
+									</CardTitle>
+									<CardDescription>
+										Manage exercise videos and their content
+									</CardDescription>
+								</div>
+								<PermissionGate permissions={[Permission.ManageVideos]}>
+									<Button onClick={() => setShowCreateModal(true)}>
+										<Plus className="h-4 w-4 mr-2" />
+										Add Video
+									</Button>
+								</PermissionGate>
+							</div>
+						</CardHeader>
+						<CardContent>
 					{/* Filters */}
 					<div className="flex flex-col gap-4 mb-6">
 						<div className="flex flex-col sm:flex-row gap-4">
@@ -596,6 +612,13 @@ export function VideosTab() {
 																		</DropdownMenuTrigger>
 																		<DropdownMenuContent align="end">
 																			<DropdownMenuItem
+																				onClick={() => openPreviewSidebar(video)}
+																			>
+																				<Play className="h-4 w-4 mr-2" />
+																				Preview
+																			</DropdownMenuItem>
+																			<DropdownMenuSeparator />
+																			<DropdownMenuItem
 																				onClick={() => openEditModal(video)}
 																			>
 																				<Edit className="h-4 w-4 mr-2" />
@@ -622,8 +645,18 @@ export function VideosTab() {
 							)}
 						</div>
 					)}
-				</CardContent>
-			</Card>
+						</CardContent>
+					</Card>
+				</div>
+
+				{/* Preview Sidebar - split-screen when a video is selected */}
+				{previewVideo && (
+					<VideoPreviewSidebar
+						video={previewVideo}
+						onClose={closePreviewSidebar}
+					/>
+				)}
+			</div>
 
 			{/* Create Video Modal */}
 			<VideoFormDialog
