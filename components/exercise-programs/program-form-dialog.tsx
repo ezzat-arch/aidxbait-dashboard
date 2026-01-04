@@ -1,5 +1,8 @@
 "use client";
 
+// Feature flag: Set to true to make thumbnail required again
+const THUMBNAIL_REQUIRED = false;
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -118,7 +121,7 @@ export function ProgramFormDialog({
 			return;
 		}
 
-		if (!formData.thumbnail_url.trim()) {
+		if (THUMBNAIL_REQUIRED && !formData.thumbnail_url.trim()) {
 			return;
 		}
 
@@ -139,7 +142,7 @@ export function ProgramFormDialog({
 				description: formData.description.trim() || undefined,
 				description_ar: formData.description_ar.trim() || undefined,
 				joint_id: formData.joint_id,
-				thumbnail_url: formData.thumbnail_url.trim(),
+				thumbnail_url: formData.thumbnail_url.trim() || undefined,
 				price: formData.price,
 			});
 		} finally {
@@ -154,10 +157,13 @@ export function ProgramFormDialog({
 	};
 
 	const isFormValid = () => {
+		const thumbnailValid = THUMBNAIL_REQUIRED
+			? formData.thumbnail_url.trim()
+			: true;
 		return (
 			formData.title.trim() &&
 			formData.title_ar.trim() &&
-			formData.thumbnail_url.trim() &&
+			thumbnailValid &&
 			formData.price >= 0 &&
 			formData.joint_id > 0
 		);
@@ -289,7 +295,7 @@ export function ProgramFormDialog({
 						label="Program Thumbnail"
 						description="Upload an image for the exercise program. Recommended aspect ratio: 16:9"
 						disabled={loading}
-						required
+						required={THUMBNAIL_REQUIRED}
 					/>
 
 					{/* Price Input */}
