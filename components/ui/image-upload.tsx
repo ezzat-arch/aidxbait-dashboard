@@ -10,6 +10,7 @@ interface ImageUploadProps {
 	value?: string;
 	onChange: (url: string) => void;
 	onRemove?: () => void;
+	onError?: (error: Error) => void;
 	uploadEndpoint: string;
 	label?: string;
 	description?: string;
@@ -24,6 +25,7 @@ export function ImageUpload({
 	value,
 	onChange,
 	onRemove,
+	onError,
 	uploadEndpoint,
 	label = "Image",
 	description,
@@ -91,12 +93,17 @@ export function ImageUpload({
 			}
 		} catch (error) {
 			console.error("Upload error:", error);
-			toast({
-				variant: "destructive",
-				title: "Upload failed",
-				description:
-					error instanceof Error ? error.message : "Failed to upload image",
-			});
+			const errorObj =
+				error instanceof Error ? error : new Error("Failed to upload image");
+			if (onError) {
+				onError(errorObj);
+			} else {
+				toast({
+					variant: "destructive",
+					title: "Upload failed",
+					description: errorObj.message,
+				});
+			}
 		} finally {
 			setUploading(false);
 		}

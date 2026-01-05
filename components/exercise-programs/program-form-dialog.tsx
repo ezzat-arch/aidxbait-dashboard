@@ -5,6 +5,7 @@ const THUMBNAIL_REQUIRED = false;
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import {
 	Dialog,
 	DialogContent,
@@ -67,6 +68,7 @@ export function ProgramFormDialog({
 	const [joints, setJoints] = useState<ProgramJointName[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [jointsLoading, setJointsLoading] = useState(false);
+	const { toast } = useToast();
 
 	// Fetch joints when component mounts
 	useEffect(() => {
@@ -291,6 +293,13 @@ export function ProgramFormDialog({
 						onChange={(url) =>
 							setFormData((prev) => ({ ...prev, thumbnail_url: url }))
 						}
+						onError={(error) => {
+							toast({
+								variant: "destructive",
+								title: "Thumbnail Upload Failed",
+								description: error.message,
+							});
+						}}
 						uploadEndpoint="/api/protected/exercise-programs/upload-thumbnail"
 						label="Program Thumbnail"
 						description="Upload an image for the exercise program. Recommended aspect ratio: 16:9"

@@ -4,6 +4,9 @@ import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 import type { CreateProgramData } from "@/types/exercise-program-types";
 
+// Feature flag: Set to true to make thumbnail required again
+const THUMBNAIL_REQUIRED = false;
+
 const handleGetPrograms = withPermission(
 	[Permission.ViewExercisePrograms],
 	async (req, context, user) => {
@@ -128,7 +131,10 @@ const handleCreateProgram = withPermission(
 				);
 			}
 
-			if (!body.thumbnail_url || typeof body.thumbnail_url !== "string") {
+			if (
+				THUMBNAIL_REQUIRED &&
+				(!body.thumbnail_url || typeof body.thumbnail_url !== "string")
+			) {
 				return NextResponse.json(
 					{ error: "Thumbnail URL is required" },
 					{ status: 400 }
@@ -165,7 +171,7 @@ const handleCreateProgram = withPermission(
 					description: body.description?.trim() || null,
 					description_ar: body.description_ar?.trim() || null,
 					joint_id: body.joint_id,
-					thumbnail_url: body.thumbnail_url.trim(),
+					thumbnail_url: body.thumbnail_url?.trim() || null,
 					price: body.price,
 					soft_deleted: false,
 					created_at: new Date().toISOString(),

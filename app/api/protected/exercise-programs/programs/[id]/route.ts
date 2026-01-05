@@ -195,7 +195,7 @@ const handleUpdateProgram = withPermission(
 				updateData.price = body.price;
 			}
 			if (body.thumbnail_url !== undefined) {
-				updateData.thumbnail_url = body.thumbnail_url.trim();
+				updateData.thumbnail_url = body.thumbnail_url?.trim() || null;
 			}
 
 			// Handle thumbnail cleanup if a new thumbnail URL is provided
