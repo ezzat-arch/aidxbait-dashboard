@@ -83,12 +83,14 @@ const handleGetProgram = withPermission(
 				0
 			);
 
+			// Rename program_joint_names to joints to match frontend expectations
+			const { program_joint_names, program_videos, ...programRest } = program;
 			const enrichedProgram = {
-				...program,
+				...programRest,
+				joints: program_joint_names,
 				videos: activeVideos,
 				video_count: activeVideos.length,
 				total_duration: totalDuration,
-				program_videos: undefined, // Remove the raw join data
 			};
 
 			return NextResponse.json({ data: enrichedProgram });
@@ -134,12 +136,12 @@ const handleUpdateProgram = withPermission(
 					);
 				}
 
-				// Verify that the joint exists
-				const { data: joint, error: jointError } = await supabase
-					.from("joints")
-					.select("id")
-					.eq("id", body.joint_id)
-					.single();
+			// Verify that the joint exists
+			const { data: joint, error: jointError } = await supabase
+				.from("program_joint_names")
+				.select("id")
+				.eq("id", body.joint_id)
+				.single();
 
 				if (jointError || !joint) {
 					return NextResponse.json(

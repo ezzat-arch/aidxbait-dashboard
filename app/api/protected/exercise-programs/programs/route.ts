@@ -82,16 +82,19 @@ const handleGetPrograms = withPermission(
 						})
 						.map((pe: any) => pe.videos);
 
-					const totalDuration = activeVideos.reduce(
-						(sum: number, video: any) => sum + (video.duration || 0),
-						0
-					);
+				const totalDuration = activeVideos.reduce(
+					(sum: number, video: any) => sum + (video.duration || 0),
+					0
+				);
 
-					return {
-						...program,
-						exercise_count: (programExercises || []).length,
-						total_duration: totalDuration,
-					};
+				// Rename program_joint_names to joints to match frontend expectations
+				const { program_joint_names, ...programRest } = program;
+				return {
+					...programRest,
+					joints: program_joint_names,
+					exercise_count: (programExercises || []).length,
+					total_duration: totalDuration,
+				};
 				})
 			);
 
