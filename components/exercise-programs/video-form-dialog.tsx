@@ -15,6 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { SecureHlsPreviewPlayer } from "@/components/video/SecureHlsPreviewPlayer";
 import type {
 	CreateVideoData,
@@ -23,6 +30,7 @@ import type {
 	Video,
 } from "@/types/exercise-program-types";
 import {
+	VIDEO_CATEGORIES,
 	durationInputToSeconds,
 	secondsToDurationInput,
 } from "@/types/exercise-program-types";
@@ -129,10 +137,12 @@ export function VideoFormDialog({
 			setLoading(true);
 
 			if (isEdit) {
-				// For editing, only send editable fields
+				// For editing, send editable fields including category
 				await onSubmit({
 					title: formData.title.trim(),
 					title_ar: formData.title_ar.trim(),
+					category: formData.category.trim(),
+					category_ar: formData.category_ar.trim(),
 					description: formData.description.trim() || undefined,
 					description_ar: formData.description_ar.trim() || undefined,
 					duration,
@@ -302,6 +312,46 @@ export function VideoFormDialog({
 								</div>
 							</TabsContent>
 						</Tabs>
+
+						{/* Category Select - shown when editing */}
+						{isEdit && (
+							<div className="space-y-2">
+								<Label htmlFor="category-select">Category</Label>
+								<Select
+									value={formData.category}
+									onValueChange={(value) => {
+										// Find the selected category to get both EN and AR values
+										const selectedCategory = VIDEO_CATEGORIES.find(
+											(cat) => cat.en === value
+										);
+										if (selectedCategory) {
+											setFormData((prev) => ({
+												...prev,
+												category: selectedCategory.en,
+												category_ar: selectedCategory.ar,
+											}));
+										}
+									}}
+									disabled={loading}
+								>
+									<SelectTrigger id="category-select">
+										<SelectValue placeholder="Select a category" />
+									</SelectTrigger>
+									<SelectContent>
+										{VIDEO_CATEGORIES.map((cat) => (
+											<SelectItem key={cat.en} value={cat.en}>
+												{cat.en}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								{formData.category_ar && (
+									<p className="text-sm text-muted-foreground" dir="rtl">
+										{formData.category_ar}
+									</p>
+								)}
+							</div>
+						)}
 
 						{/* Duration Input */}
 						<div className="space-y-2">

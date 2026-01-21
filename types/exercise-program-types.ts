@@ -1,5 +1,23 @@
 // Exercise Program entity types based on the database schema
 
+// Hardcoded video categories with English and Arabic translations
+export const VIDEO_CATEGORIES = [
+	{ en: "Hand", ar: "اليد" },
+	{ en: "Spine - CS", ar: "العمود الفقري - CS" },
+	{ en: "Elbow", ar: "الكوع" },
+	{ en: "Spine - DLS All 4s arching", ar: "العمود الفقري - DLS All 4s arching" },
+	{ en: "Knee", ar: "الركبة" },
+	{ en: "Wrist", ar: "الرسغ" },
+	{ en: "Spine - LSS", ar: "العمود الفقري - LSS" },
+	{ en: "Shoulder", ar: "الكتف" },
+	{ en: "Complex & Poses & Stances", ar: "حركات معقدة ووضعيات" },
+	{ en: "Ankle & Foot", ar: "الكاحل والقدم" },
+	{ en: "Hip", ar: "الورك" },
+	{ en: "Abs", ar: "البطن" },
+] as const;
+
+export type VideoCategory = (typeof VIDEO_CATEGORIES)[number];
+
 // Program joint names - separate from product joint names
 export interface ProgramJointName {
 	id: number;
@@ -140,7 +158,13 @@ export interface UpdateVideoData
 	extends Partial<
 		Pick<
 			CreateVideoData,
-			"title" | "title_ar" | "description" | "description_ar" | "duration"
+			| "title"
+			| "title_ar"
+			| "description"
+			| "description_ar"
+			| "duration"
+			| "category"
+			| "category_ar"
 		>
 	> {
 	id: number;

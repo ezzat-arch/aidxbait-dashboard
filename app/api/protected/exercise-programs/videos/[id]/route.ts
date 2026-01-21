@@ -115,6 +115,12 @@ const handleUpdateVideo = withPermission(
 			if (body.duration !== undefined) {
 				updateData.duration = body.duration;
 			}
+			if (body.category !== undefined) {
+				updateData.category = body.category.trim();
+			}
+			if (body.category_ar !== undefined) {
+				updateData.category_ar = body.category_ar.trim();
+			}
 
 			// Update video
 			const { data: video, error } = await supabase
