@@ -11,11 +11,13 @@ const handleGetVideos = withPermission(
 			const supabase = await createClient();
 
 			// Fetch all videos (excluding soft deleted)
+			// Using .range(0, 9999) to bypass Supabase's default row limit
 			const { data: videos, error } = await supabase
 				.from("videos")
 				.select("*")
 				.eq("soft_deleted", false)
-				.order("created_at", { ascending: false });
+				.order("created_at", { ascending: false })
+				.range(0, 9999);
 
 			if (error) {
 				console.error("Database error:", error);
