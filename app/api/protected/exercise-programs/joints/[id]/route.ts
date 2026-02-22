@@ -7,7 +7,7 @@ const handleGetProgramJoint = withPermission(
 	[Permission.ViewExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const { id } = context.params;
+			const { id } = await context.params;
 			const jointId = parseInt(id);
 
 			if (isNaN(jointId)) {
@@ -49,7 +49,7 @@ const handleUpdateProgramJoint = withPermission(
 	[Permission.UpdateExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const { id } = context.params;
+			const { id } = await context.params;
 			const jointId = parseInt(id);
 
 			if (isNaN(jointId)) {
@@ -123,7 +123,7 @@ const handleDeleteProgramJoint = withPermission(
 	[Permission.DeleteExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const { id } = context.params;
+			const { id } = await context.params;
 			const jointId = parseInt(id);
 
 			if (isNaN(jointId)) {

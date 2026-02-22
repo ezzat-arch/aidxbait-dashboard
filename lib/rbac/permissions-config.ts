@@ -57,6 +57,30 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"PUT /api/protected/store": [Permission.UpdateStoreItems],
 	"DELETE /api/protected/store": [Permission.DeleteStoreItems],
 
+	// Store categories
+	"GET /api/protected/store/categories": [Permission.ViewStore],
+	"POST /api/protected/store/categories": [Permission.CreateStoreItems],
+	"GET /api/protected/store/categories/[id]": [Permission.ViewStore],
+	"PUT /api/protected/store/categories/[id]": [Permission.UpdateStoreItems],
+	"DELETE /api/protected/store/categories/[id]": [Permission.DeleteStoreItems],
+
+	// Store subcategories (nested under category)
+	"GET /api/protected/store/categories/[id]/subcategories": [
+		Permission.ViewStore,
+	],
+	"POST /api/protected/store/categories/[id]/subcategories": [
+		Permission.CreateStoreItems,
+	],
+	"GET /api/protected/store/categories/[id]/subcategories/[subId]": [
+		Permission.ViewStore,
+	],
+	"PUT /api/protected/store/categories/[id]/subcategories/[subId]": [
+		Permission.UpdateStoreItems,
+	],
+	"DELETE /api/protected/store/categories/[id]/subcategories/[subId]": [
+		Permission.DeleteStoreItems,
+	],
+
 	// Exercise Programs API permissions
 	"GET /api/protected/exercise-programs/videos": [
 		Permission.ViewExercisePrograms,

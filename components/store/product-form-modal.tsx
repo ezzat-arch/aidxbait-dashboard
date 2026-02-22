@@ -62,6 +62,14 @@ import type {
 
 // Schema for product form validation
 const productSchema = z.object({
+	category_id: z
+		.union([z.number(), z.string()])
+		.transform((val) => (typeof val === "string" ? parseInt(val, 10) : val))
+		.pipe(z.number().min(1, "Category is required")),
+	subcategory_id: z
+		.union([z.number(), z.string()])
+		.transform((val) => (typeof val === "string" ? parseInt(val, 10) : val))
+		.pipe(z.number().min(1, "Subcategory is required")),
 	name: z.string().min(1, "Product name is required"),
 	name_ar: z.string().min(1, "Arabic product name is required"),
 	description: z.string().optional(),
@@ -127,6 +135,14 @@ const productSchema = z.object({
 
 // Step-specific validation schemas
 const step1Schema = z.object({
+	category_id: z
+		.union([z.number(), z.string()])
+		.transform((val) => (typeof val === "string" ? parseInt(val, 10) : val))
+		.pipe(z.number().min(1, "Category is required")),
+	subcategory_id: z
+		.union([z.number(), z.string()])
+		.transform((val) => (typeof val === "string" ? parseInt(val, 10) : val))
+		.pipe(z.number().min(1, "Subcategory is required")),
 	name: z.string().min(1, "Product name is required"),
 	name_ar: z.string().min(1, "Arabic product name is required"),
 	description: z.string().optional(),
@@ -221,8 +237,8 @@ const StepIndicator = ({
 							currentStep > index + 1
 								? "bg-primary text-primary-foreground"
 								: currentStep === index + 1
-								? "bg-primary text-primary-foreground ring-2 ring-primary/20"
-								: "bg-muted text-muted-foreground"
+									? "bg-primary text-primary-foreground ring-2 ring-primary/20"
+									: "bg-muted text-muted-foreground"
 						)}
 					>
 						{currentStep > index + 1 ? (
@@ -246,11 +262,94 @@ const StepIndicator = ({
 };
 
 // Step 1: Basic Information
-const BasicInformationStep = ({ form }: { form: any }) => {
+const BasicInformationStep = ({
+	form,
+	categories,
+	subcategories,
+}: {
+	form: any;
+	categories: { id: number; name: string; name_ar: string }[];
+	subcategories: {
+		id: number;
+		category_id: number;
+		name: string;
+		name_ar: string;
+	}[];
+}) => {
+	const categoryId = form.watch("category_id");
+	const categoryIdNum =
+		typeof categoryId === "string"
+			? parseInt(categoryId, 10)
+			: Number(categoryId);
+
 	return (
 		<div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
 			<div className="space-y-4">
 				<h3 className="text-lg font-semibold">Basic Information</h3>
+
+				{/* Category and Subcategory */}
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<FormField
+						control={form.control}
+						name="category_id"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Category *</FormLabel>
+								<Select
+									onValueChange={(val) => {
+										field.onChange(parseInt(val, 10) || 0);
+										form.setValue("subcategory_id", 0);
+									}}
+									value={field.value ? String(field.value) : ""}
+								>
+									<FormControl>
+										<SelectTrigger>
+											<SelectValue placeholder="Select category" />
+										</SelectTrigger>
+									</FormControl>
+									<SelectContent>
+										{categories.map((cat) => (
+											<SelectItem key={cat.id} value={String(cat.id)}>
+												{cat.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<FormField
+						control={form.control}
+						name="subcategory_id"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Subcategory *</FormLabel>
+								<Select
+									onValueChange={(val) =>
+										field.onChange(parseInt(val, 10) || 0)
+									}
+									value={field.value ? String(field.value) : ""}
+									disabled={!categoryIdNum || categoryIdNum < 1}
+								>
+									<FormControl>
+										<SelectTrigger>
+											<SelectValue placeholder="Select subcategory" />
+										</SelectTrigger>
+									</FormControl>
+									<SelectContent>
+										{subcategories.map((sub) => (
+											<SelectItem key={sub.id} value={String(sub.id)}>
+												{sub.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				</div>
 
 				{/* Product Name - Side by side */}
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1025,12 +1124,20 @@ export const ProductFormModal = ({
 	const [currentStep, setCurrentStep] = useState(1);
 	const [loading, setLoading] = useState(false);
 	const [joints, setJoints] = useState<ProductJointName[]>([]);
+	const [categories, setCategories] = useState<
+		{ id: number; name: string; name_ar: string }[]
+	>([]);
+	const [subcategories, setSubcategories] = useState<
+		{ id: number; category_id: number; name: string; name_ar: string }[]
+	>([]);
 	const [validationErrors, setValidationErrors] = useState<string[]>([]);
 	const { toast } = useToast();
 
 	const form = useForm({
 		resolver: zodResolver(productSchema),
 		defaultValues: {
+			category_id: 0,
+			subcategory_id: 0,
 			name: "",
 			name_ar: "",
 			description: "",
@@ -1052,9 +1159,13 @@ export const ProductFormModal = ({
 		mode: "onChange",
 	});
 
+	const watchedCategoryId = form.watch("category_id");
+
 	// Step validation functions
 	const validateStep1 = async () => {
 		const step1Data = {
+			category_id: form.getValues("category_id"),
+			subcategory_id: form.getValues("subcategory_id"),
 			name: form.getValues("name"),
 			name_ar: form.getValues("name_ar"),
 			description: form.getValues("description"),
@@ -1071,8 +1182,8 @@ export const ProductFormModal = ({
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				const errors: string[] = [];
-				error.errors.forEach((err) => {
-					const fieldName = err.path[0] as string;
+				error.issues.forEach((err) => {
+					const fieldName = String(err.path[0] ?? "");
 					form.setError(fieldName as any, {
 						type: "manual",
 						message: err.message,
@@ -1106,8 +1217,8 @@ export const ProductFormModal = ({
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				const errors: string[] = [];
-				error.errors.forEach((err) => {
-					const fieldName = err.path[0] as string;
+				error.issues.forEach((err) => {
+					const fieldName = String(err.path[0] ?? "");
 					const fieldLabel =
 						fieldName === "rent_term" ? "Rent Term" : fieldName;
 					form.setError(fieldName as any, {
@@ -1133,8 +1244,8 @@ export const ProductFormModal = ({
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				const errors: string[] = [];
-				error.errors.forEach((err) => {
-					const fieldName = err.path[0] as string;
+				error.issues.forEach((err) => {
+					const fieldName = String(err.path[0] ?? "");
 					const fieldLabel =
 						fieldName === "images" ? "Product Images" : fieldName;
 					form.setError(fieldName as any, {
@@ -1157,11 +1268,14 @@ export const ProductFormModal = ({
 	useEffect(() => {
 		if (open) {
 			fetchJoints();
+			fetchCategories();
 			setCurrentStep(1);
 			setValidationErrors([]);
 
 			if (product) {
 				form.reset({
+					category_id: product.category_id ?? 0,
+					subcategory_id: product.subcategory_id ?? 0,
 					name: product.name,
 					name_ar: product.name_ar,
 					description: product.description || "",
@@ -1184,8 +1298,12 @@ export const ProductFormModal = ({
 							is_main: img.is_main,
 						})) || [],
 				});
+				const catId = product.category_id;
+				if (catId) fetchSubcategoriesForCategory(catId);
 			} else {
 				form.reset({
+					category_id: 0,
+					subcategory_id: 0,
 					name: "",
 					name_ar: "",
 					description: "",
@@ -1204,6 +1322,7 @@ export const ProductFormModal = ({
 					joint_ids: [],
 					images: [],
 				});
+				setSubcategories([]);
 			}
 		}
 	}, [open, product, form]);
@@ -1219,6 +1338,50 @@ export const ProductFormModal = ({
 			// Silently handle joint fetch errors
 		}
 	};
+
+	const fetchCategories = async () => {
+		try {
+			const response = await fetch("/api/protected/store/categories");
+			if (response.ok) {
+				const result = await response.json();
+				setCategories(result.data ?? []);
+			}
+		} catch (error) {
+			// Silently handle category fetch errors
+		}
+	};
+
+	const fetchSubcategoriesForCategory = async (categoryId: number) => {
+		if (!categoryId) {
+			setSubcategories([]);
+			return;
+		}
+		try {
+			const response = await fetch(
+				`/api/protected/store/categories/${categoryId}/subcategories`
+			);
+			if (response.ok) {
+				const result = await response.json();
+				setSubcategories(result.data ?? []);
+			} else {
+				setSubcategories([]);
+			}
+		} catch (error) {
+			setSubcategories([]);
+		}
+	};
+
+	useEffect(() => {
+		const catId =
+			typeof watchedCategoryId === "string"
+				? parseInt(watchedCategoryId, 10)
+				: Number(watchedCategoryId);
+		if (catId > 0) {
+			fetchSubcategoriesForCategory(catId);
+		} else {
+			setSubcategories([]);
+		}
+	}, [watchedCategoryId]);
 
 	const nextStep = async () => {
 		if (currentStep < 4) {
@@ -1363,6 +1526,8 @@ export const ProductFormModal = ({
 					if (error?.message) {
 						const fieldLabel =
 							{
+								category_id: "Category",
+								subcategory_id: "Subcategory",
 								name: "Product Name (English)",
 								name_ar: "Product Name (Arabic)",
 								price: "Price",
@@ -1400,7 +1565,13 @@ export const ProductFormModal = ({
 	const renderStep = () => {
 		switch (currentStep) {
 			case 1:
-				return <BasicInformationStep form={form} />;
+				return (
+					<BasicInformationStep
+						form={form}
+						categories={categories}
+						subcategories={subcategories}
+					/>
+				);
 			case 2:
 				return <DetailsStep form={form} joints={joints} />;
 			case 3:

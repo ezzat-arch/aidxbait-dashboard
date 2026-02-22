@@ -7,7 +7,7 @@ const handleGetJoint = withPermission(
 	[Permission.ViewStore],
 	async (req, context, user) => {
 		try {
-			const { id } = context.params;
+			const { id } = await context.params;
 			const jointId = parseInt(id);
 
 			if (isNaN(jointId)) {
@@ -46,7 +46,7 @@ const handleUpdateJoint = withPermission(
 	[Permission.UpdateStoreItems],
 	async (req, context, user) => {
 		try {
-			const { id } = context.params;
+			const { id } = await context.params;
 			const jointId = parseInt(id);
 
 			if (isNaN(jointId)) {
@@ -120,7 +120,7 @@ const handleDeleteJoint = withPermission(
 	[Permission.DeleteStoreItems],
 	async (req, context, user) => {
 		try {
-			const { id } = context.params;
+			const { id } = await context.params;
 			const jointId = parseInt(id);
 
 			if (isNaN(jointId)) {

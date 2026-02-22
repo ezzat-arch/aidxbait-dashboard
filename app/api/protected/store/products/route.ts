@@ -105,6 +105,25 @@ const handleCreateProduct = withPermission(
 				);
 			}
 
+			const categoryId =
+				body.category_id != null ? parseInt(body.category_id, 10) : NaN;
+			const subcategoryId =
+				body.subcategory_id != null
+					? parseInt(body.subcategory_id, 10)
+					: NaN;
+			if (Number.isNaN(categoryId) || categoryId < 1) {
+				return NextResponse.json(
+					{ error: "A valid category is required" },
+					{ status: 400 }
+				);
+			}
+			if (Number.isNaN(subcategoryId) || subcategoryId < 1) {
+				return NextResponse.json(
+					{ error: "A valid subcategory is required" },
+					{ status: 400 }
+				);
+			}
+
 			// Create product in a transaction
 			const { data: product, error } = await supabase
 				.from("products")
@@ -113,6 +132,8 @@ const handleCreateProduct = withPermission(
 					name_ar: body.name_ar.trim(),
 					description: body.description?.trim() || null,
 					description_ar: body.description_ar?.trim() || null,
+					category_id: categoryId,
+					subcategory_id: subcategoryId,
 					price: parseFloat(body.price),
 					discounted_price: body.discounted_price
 						? parseFloat(body.discounted_price)

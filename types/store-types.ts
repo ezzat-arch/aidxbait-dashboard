@@ -20,12 +20,33 @@ export interface ProductJointName {
 	name_ar: string;
 }
 
+// Store category (top-level)
+export interface StoreCategory {
+	id: number;
+	name: string;
+	name_ar: string;
+	created_at?: string;
+	updated_at?: string;
+}
+
+// Store subcategory (belongs to a category)
+export interface StoreSubcategory {
+	id: number;
+	category_id: number;
+	name: string;
+	name_ar: string;
+	created_at?: string;
+	updated_at?: string;
+}
+
 export interface Product {
 	id: number;
 	name: string;
 	name_ar: string;
 	description?: string;
 	description_ar?: string;
+	category_id: number;
+	subcategory_id: number;
 	price: number;
 	discounted_price?: number;
 	currency: Currency;
@@ -107,6 +128,8 @@ export interface CreateProductData {
 	name_ar: string;
 	description?: string;
 	description_ar?: string;
+	category_id: number;
+	subcategory_id: number;
 	price: number;
 	discounted_price?: number;
 	currency: Currency;
@@ -194,6 +217,30 @@ export interface ProductFormDrawerProps {
 }
 
 export interface JointFormDialogProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onSubmit: (data: { name: string; name_ar: string }) => Promise<void>;
+	title: string;
+	description: string;
+	defaultValues?: {
+		name: string;
+		name_ar: string;
+	};
+}
+
+export interface CategoryFormDialogProps {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onSubmit: (data: { name: string; name_ar: string }) => Promise<void>;
+	title: string;
+	description: string;
+	defaultValues?: {
+		name: string;
+		name_ar: string;
+	};
+}
+
+export interface SubcategoryFormDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	onSubmit: (data: { name: string; name_ar: string }) => Promise<void>;

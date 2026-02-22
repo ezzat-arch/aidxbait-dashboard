@@ -7,7 +7,7 @@ const handleGetProduct = withPermission(
 	[Permission.ViewStore],
 	async (req, context, user) => {
 		try {
-			const { id } = context.params;
+			const { id } = await context.params;
 			const productId = parseInt(id);
 
 			if (isNaN(productId)) {
@@ -52,7 +52,7 @@ const handleGetProduct = withPermission(
 			const averageRating =
 				reviewCount > 0 && reviewStats
 					? reviewStats.reduce((sum, review) => sum + review.rating, 0) /
-					  reviewCount
+						reviewCount
 					: 0;
 
 			const productWithDetails = {
@@ -79,7 +79,7 @@ const handleUpdateProduct = withPermission(
 	[Permission.UpdateStoreItems],
 	async (req, context, user) => {
 		try {
-			const { id } = context.params;
+			const { id } = await context.params;
 			const productId = parseInt(id);
 
 			if (isNaN(productId)) {
@@ -119,29 +119,43 @@ const handleUpdateProduct = withPermission(
 			// Start transaction-like operations with proper error handling
 			const errors: string[] = [];
 
+			const updatePayload: Record<string, unknown> = {
+				name: body.name.trim(),
+				name_ar: body.name_ar.trim(),
+				description: body.description?.trim() || null,
+				description_ar: body.description_ar?.trim() || null,
+				price: parseFloat(body.price),
+				discounted_price: body.discounted_price
+					? parseFloat(body.discounted_price)
+					: null,
+				currency: body.currency || "EGP",
+				stock: parseInt(body.stock) || 0,
+				is_best_seller: body.is_best_seller || false,
+				is_featured: body.is_featured || false,
+				is_available: body.is_available !== false,
+				is_oos: body.is_oos || false,
+				is_for_rent: body.is_for_rent || false,
+				rent_term: body.rent_term || null,
+				tags: body.tags || [],
+				updated_at: new Date().toISOString(),
+			};
+			if (
+				body.category_id != null &&
+				!Number.isNaN(parseInt(body.category_id, 10))
+			) {
+				updatePayload.category_id = parseInt(body.category_id, 10);
+			}
+			if (
+				body.subcategory_id != null &&
+				!Number.isNaN(parseInt(body.subcategory_id, 10))
+			) {
+				updatePayload.subcategory_id = parseInt(body.subcategory_id, 10);
+			}
+
 			// Update product
 			const { data: product, error: productError } = await supabase
 				.from("products")
-				.update({
-					name: body.name.trim(),
-					name_ar: body.name_ar.trim(),
-					description: body.description?.trim() || null,
-					description_ar: body.description_ar?.trim() || null,
-					price: parseFloat(body.price),
-					discounted_price: body.discounted_price
-						? parseFloat(body.discounted_price)
-						: null,
-					currency: body.currency || "EGP",
-					stock: parseInt(body.stock) || 0,
-					is_best_seller: body.is_best_seller || false,
-					is_featured: body.is_featured || false,
-					is_available: body.is_available !== false,
-					is_oos: body.is_oos || false,
-					is_for_rent: body.is_for_rent || false,
-					rent_term: body.rent_term || null,
-					tags: body.tags || [],
-					updated_at: new Date().toISOString(),
-				})
+				.update(updatePayload)
 				.eq("id", productId)
 				.eq("soft_deleted", false)
 				.select()
@@ -261,7 +275,7 @@ const handleDeleteProduct = withPermission(
 	[Permission.DeleteStoreItems],
 	async (req, context, user) => {
 		try {
-			const { id } = context.params;
+			const { id } = await context.params;
 			const productId = parseInt(id);
 
 			if (isNaN(productId)) {

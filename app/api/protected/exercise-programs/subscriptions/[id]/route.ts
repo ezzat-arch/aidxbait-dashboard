@@ -8,7 +8,7 @@ const handleGetSubscription = withPermission(
 	async (req, context, user) => {
 		try {
 			const supabase = await createClient();
-			const { id } = context.params;
+			const { id } = await context.params;
 
 			if (!id) {
 				return NextResponse.json(
@@ -61,7 +61,7 @@ const handleUpdateSubscription = withPermission(
 	async (req, context, user) => {
 		try {
 			const supabase = await createClient();
-			const { id } = context.params;
+			const { id } = await context.params;
 			const body = await req.json();
 
 			if (!id) {
@@ -138,7 +138,7 @@ const handleCancelSubscription = withPermission(
 	async (req, context, user) => {
 		try {
 			const supabase = await createClient();
-			const { id } = context.params;
+			const { id } = await context.params;
 			const body = await req.json();
 
 			if (!id) {
