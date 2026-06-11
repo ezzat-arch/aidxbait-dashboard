@@ -19,6 +19,15 @@ export const ROLE_PERMISSIONS: RolePermissions = {
 		Permission.UpdateExercisePrograms,
 		Permission.DeleteExercisePrograms,
 		Permission.ManageVideos,
+		// Therapists - view + approval workflow
+		Permission.ViewTherapists,
+		Permission.ApproveTherapists,
+		Permission.DeclineTherapists,
+		// Service areas - full CRUD
+		Permission.ViewLocations,
+		Permission.CreateLocations,
+		Permission.UpdateLocations,
+		Permission.DeleteLocations,
 	],
 	[Role.Therapist]: [],
 	[Role.Consultant]: [],
@@ -39,6 +48,8 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
 	"/dashboard/exercise-programs": [Permission.ViewExercisePrograms],
 	"/dashboard/program-subscription": [Permission.ViewSubscriptions],
 	"/dashboard/orders": [Permission.ViewOrders],
+	"/dashboard/therapists": [Permission.ViewTherapists],
+	"/dashboard/locations": [Permission.ViewLocations],
 };
 
 // Define API route permissions
@@ -145,4 +156,16 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"GET /api/protected/orders/[id]": [Permission.ViewOrderDetails],
 	"PUT /api/protected/orders/[id]": [Permission.UpdateOrderStatus],
 	"PUT /api/protected/orders/[id]/cancel": [Permission.CancelOrder],
+
+	// Therapist management API permissions
+	"GET /api/protected/therapists": [Permission.ViewTherapists],
+	"GET /api/protected/therapists/[id]": [Permission.ViewTherapists],
+	"PUT /api/protected/therapists/[id]/approve": [Permission.ApproveTherapists],
+	"PUT /api/protected/therapists/[id]/decline": [Permission.DeclineTherapists],
+
+	// Service area (locations) API permissions
+	"GET /api/protected/locations": [Permission.ViewLocations],
+	"POST /api/protected/locations": [Permission.CreateLocations],
+	"PUT /api/protected/locations/[id]": [Permission.UpdateLocations],
+	"DELETE /api/protected/locations/[id]": [Permission.DeleteLocations],
 };

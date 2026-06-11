@@ -43,6 +43,17 @@ export enum Permission {
 	UpdateOrderStatus = "orders:update-status",
 	CancelOrder = "orders:cancel",
 	ManageRefunds = "orders:manage-refunds",
+
+	// Therapist management permissions
+	ViewTherapists = "therapists:view",
+	ApproveTherapists = "therapists:approve",
+	DeclineTherapists = "therapists:decline",
+
+	// Service area (locations) management permissions
+	ViewLocations = "locations:view",
+	CreateLocations = "locations:create",
+	UpdateLocations = "locations:update",
+	DeleteLocations = "locations:delete",
 }
 
 // Define role types

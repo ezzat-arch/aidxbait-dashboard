@@ -15,6 +15,8 @@ import {
 	Dumbbell,
 	CalendarDays,
 	ShoppingCart,
+	Stethoscope,
+	MapPin,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,6 +44,20 @@ export function DashboardSidebar() {
 			href: "/dashboard/users",
 			icon: Users,
 			permission: Permission.ViewUsers,
+			disabled: false,
+		},
+		{
+			title: "Therapists",
+			href: "/dashboard/therapists",
+			icon: Stethoscope,
+			permission: Permission.ViewTherapists,
+			disabled: false,
+		},
+		{
+			title: "Service Areas",
+			href: "/dashboard/locations",
+			icon: MapPin,
+			permission: Permission.ViewLocations,
 			disabled: false,
 		},
 		{
