@@ -38,6 +38,13 @@ export interface TherapistDocument {
 	signed_url: string | null;
 }
 
+export interface TherapistReview {
+	id: number;
+	rating: number;
+	comment: string | null;
+	created_at: string;
+}
+
 export interface TherapistDetail {
 	id: number;
 	account_status: TherapistAccountStatus;
@@ -49,6 +56,9 @@ export interface TherapistDetail {
 	is_available: boolean;
 	created_at: string;
 	updated_at: string;
+	rating_avg: number;
+	rating_count: number;
+	reviews: TherapistReview[];
 	users: {
 		id: number;
 		first_name: string | null;

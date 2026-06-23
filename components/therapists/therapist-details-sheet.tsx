@@ -12,6 +12,7 @@ import {
 	ExternalLink,
 	CheckCircle2,
 	XCircle,
+	Star,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -220,6 +221,59 @@ export function TherapistDetailsSheet({
 												<span className="text-xs text-muted-foreground">
 													Unavailable
 												</span>
+											)}
+										</div>
+									))}
+								</div>
+							)}
+						</div>
+
+						<Separator />
+
+						{/* Reviews */}
+						<div>
+							<div className="mb-3 flex items-center gap-2 text-sm font-medium">
+								<span>Patient reviews ({data.rating_count})</span>
+								{data.rating_count > 0 && (
+									<span className="flex items-center gap-1 text-amber-500">
+										<Star className="h-4 w-4 fill-amber-500" />
+										{data.rating_avg.toFixed(1)}
+									</span>
+								)}
+							</div>
+							{data.reviews.length === 0 ? (
+								<p className="text-sm text-muted-foreground">No reviews yet.</p>
+							) : (
+								<div className="space-y-3">
+									{data.reviews.map((review) => (
+										<div
+											key={review.id}
+											className="rounded-md border border-border p-3"
+										>
+											<div className="flex items-center justify-between">
+												<div className="flex items-center gap-0.5">
+													{Array.from({ length: 5 }).map((_, i) => (
+														<Star
+															key={i}
+															className={
+																i < review.rating
+																	? "h-3.5 w-3.5 fill-amber-500 text-amber-500"
+																	: "h-3.5 w-3.5 text-muted-foreground/30"
+															}
+														/>
+													))}
+												</div>
+												<span className="text-xs text-muted-foreground">
+													{new Date(review.created_at).toLocaleDateString(
+														"en-US",
+														{ year: "numeric", month: "short", day: "numeric" }
+													)}
+												</span>
+											</div>
+											{review.comment && (
+												<p className="mt-2 text-sm text-foreground">
+													{review.comment}
+												</p>
 											)}
 										</div>
 									))}

@@ -28,6 +28,11 @@ export const ROLE_PERMISSIONS: RolePermissions = {
 		Permission.CreateLocations,
 		Permission.UpdateLocations,
 		Permission.DeleteLocations,
+		// Specialties - full CRUD
+		Permission.ViewSpecialties,
+		Permission.CreateSpecialties,
+		Permission.UpdateSpecialties,
+		Permission.DeleteSpecialties,
 	],
 	[Role.Therapist]: [],
 	[Role.Consultant]: [],
@@ -50,6 +55,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
 	"/dashboard/orders": [Permission.ViewOrders],
 	"/dashboard/therapists": [Permission.ViewTherapists],
 	"/dashboard/locations": [Permission.ViewLocations],
+	"/dashboard/specialties": [Permission.ViewSpecialties],
 };
 
 // Define API route permissions
@@ -168,4 +174,10 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"POST /api/protected/locations": [Permission.CreateLocations],
 	"PUT /api/protected/locations/[id]": [Permission.UpdateLocations],
 	"DELETE /api/protected/locations/[id]": [Permission.DeleteLocations],
+
+	// Specialty API permissions
+	"GET /api/protected/specialties": [Permission.ViewSpecialties],
+	"POST /api/protected/specialties": [Permission.CreateSpecialties],
+	"PUT /api/protected/specialties/[id]": [Permission.UpdateSpecialties],
+	"DELETE /api/protected/specialties/[id]": [Permission.DeleteSpecialties],
 };

@@ -27,6 +27,7 @@ export const GET = withPermission(
 				`
 				id, account_status, specialty, bio, gender, experience_years,
 				rejection_reason, is_available, created_at, updated_at,
+				rating_avg, rating_count,
 				users:user_id ( id, first_name, last_name, email, phone_number, image_url )
 				`
 			)
@@ -67,6 +68,14 @@ export const GET = withPermission(
 			})
 		);
 
+		// Patient reviews of this therapist (most recent first).
+		const { data: reviews } = await supabaseAdmin
+			.from("visit_reviews")
+			.select("id, rating, comment, created_at")
+			.eq("therapist_id", id)
+			.order("created_at", { ascending: false })
+			.limit(100);
+
 		return NextResponse.json({
 			data: {
 				...therapist,
@@ -77,6 +86,7 @@ export const GET = withPermission(
 					)
 					.filter(Boolean),
 				documents: documentsWithUrls,
+				reviews: reviews ?? [],
 			},
 		});
 	}

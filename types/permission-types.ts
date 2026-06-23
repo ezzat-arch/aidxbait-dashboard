@@ -54,6 +54,12 @@ export enum Permission {
 	CreateLocations = "locations:create",
 	UpdateLocations = "locations:update",
 	DeleteLocations = "locations:delete",
+
+	// Specialty management permissions
+	ViewSpecialties = "specialties:view",
+	CreateSpecialties = "specialties:create",
+	UpdateSpecialties = "specialties:update",
+	DeleteSpecialties = "specialties:delete",
 }
 
 // Define role types

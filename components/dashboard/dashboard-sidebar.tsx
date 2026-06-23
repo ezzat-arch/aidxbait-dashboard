@@ -17,6 +17,7 @@ import {
 	ShoppingCart,
 	Stethoscope,
 	MapPin,
+	Tag,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -58,6 +59,13 @@ export function DashboardSidebar() {
 			href: "/dashboard/locations",
 			icon: MapPin,
 			permission: Permission.ViewLocations,
+			disabled: false,
+		},
+		{
+			title: "Specialties",
+			href: "/dashboard/specialties",
+			icon: Tag,
+			permission: Permission.ViewSpecialties,
 			disabled: false,
 		},
 		{
