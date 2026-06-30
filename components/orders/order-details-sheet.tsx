@@ -168,7 +168,7 @@ export function OrderDetailsSheet({
 							<Package className="h-5 w-5" />
 							Order Overview
 						</h3>
-						<div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
 							<div>
 								<div className="text-sm text-muted-foreground">Order Type</div>
 								<Badge
@@ -536,7 +536,7 @@ export function OrderDetailsSheet({
 					)}
 
 					{/* Quick Actions */}
-					<div className="flex gap-2 pt-4">
+					<div className="flex flex-col sm:flex-row gap-2 pt-4">
 						<PermissionGate permissions={[Permission.UpdateOrderStatus]}>
 							<Button onClick={onChangeStatus} className="flex-1">
 								<Edit className="mr-2 h-4 w-4" />

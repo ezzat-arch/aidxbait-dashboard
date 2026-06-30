@@ -632,7 +632,8 @@ export function ProgramExercisesModal({
 					</div>
 				</CollapsibleTrigger>
 				<CollapsibleContent>
-					<Table>
+					<div className="overflow-x-auto">
+						<Table>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[60px]">Order</TableHead>
@@ -754,6 +755,7 @@ export function ProgramExercisesModal({
 							})}
 						</TableBody>
 					</Table>
+					</div>
 				</CollapsibleContent>
 			</Collapsible>
 		);
@@ -788,7 +790,7 @@ export function ProgramExercisesModal({
 											Available Videos ({filteredAvailableVideos.length})
 										</h3>
 									</div>
-									<div className="flex gap-2">
+									<div className="flex flex-col sm:flex-row gap-2">
 										<div className="relative flex-1">
 											<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 											<Input
@@ -802,7 +804,7 @@ export function ProgramExercisesModal({
 											value={selectedCategory}
 											onValueChange={setSelectedCategory}
 										>
-											<SelectTrigger className="w-40">
+											<SelectTrigger className="w-full sm:w-40">
 												<SelectValue placeholder="Category" />
 											</SelectTrigger>
 											<SelectContent>

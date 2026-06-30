@@ -65,10 +65,10 @@ export function CollectionNavigator({
 
 	// Determine grid columns class based on number of collections
 	const getGridColsClass = (count: number) => {
-		if (count <= 2) return "grid-cols-2";
-		if (count <= 3) return "grid-cols-3";
-		if (count <= 4) return "grid-cols-4";
-		return "grid-cols-5";
+		if (count <= 2) return "sm:grid-cols-2";
+		if (count <= 3) return "sm:grid-cols-3";
+		if (count <= 4) return "sm:grid-cols-4";
+		return "sm:grid-cols-5";
 	};
 
 	const isSearchMode = searchQuery.trim().length > 0;
@@ -103,17 +103,23 @@ export function CollectionNavigator({
 					onValueChange={handleCollectionChange}
 					className="w-full"
 				>
-					<TabsList
-						className={`grid w-full ${getGridColsClass(
-							collections.length
-						)} lg:w-fit`}
-					>
-						{collections.map((collection) => (
-							<TabsTrigger key={collection.id} value={collection.id}>
-								{collection.name}
-							</TabsTrigger>
-						))}
-					</TabsList>
+					<div className="overflow-x-auto">
+						<TabsList
+							className={`flex w-max sm:grid sm:w-full ${getGridColsClass(
+								collections.length
+							)} h-auto lg:w-fit`}
+						>
+							{collections.map((collection) => (
+								<TabsTrigger
+									key={collection.id}
+									value={collection.id}
+									className="shrink-0 whitespace-nowrap"
+								>
+									{collection.name}
+								</TabsTrigger>
+							))}
+						</TabsList>
+					</div>
 				</Tabs>
 			)}
 		</div>

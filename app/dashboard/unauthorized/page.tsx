@@ -13,7 +13,7 @@ import { ShieldAlert } from "lucide-react";
 export default function UnauthorizedPage() {
 	return (
 		<div className="flex items-center justify-center h-full">
-			<Card className="w-[400px]">
+			<Card className="w-full max-w-[400px] mx-4">
 				<CardHeader className="text-center">
 					<div className="flex justify-center mb-4">
 						<ShieldAlert className="h-12 w-12 text-destructive" />

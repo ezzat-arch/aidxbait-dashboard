@@ -63,7 +63,7 @@ export const AnalyticsHeader = ({
 	return (
 		<>
 			{/* Header */}
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
 					<h1 className="text-2xl font-bold">Analytics Dashboard</h1>
 					<p className="text-muted-foreground">
@@ -83,7 +83,7 @@ export const AnalyticsHeader = ({
 					onValueChange={handleTabChange}
 					className="flex-1"
 				>
-					<TabsList className="grid w-full grid-cols-5 lg:w-[700px]">
+					<TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto lg:w-[700px]">
 						<TabsTrigger value="store">Store</TabsTrigger>
 						<TabsTrigger value="ecommerce">E-commerce</TabsTrigger>
 						<TabsTrigger value="programs">Programs</TabsTrigger>

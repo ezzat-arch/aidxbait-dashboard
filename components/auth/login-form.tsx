@@ -432,12 +432,12 @@ export function LoginForm() {
 										<FormControl>
 											<div className="flex justify-center">
 												<InputOTP maxLength={6} {...field}>
-													<InputOTPGroup className="gap-2">
+													<InputOTPGroup className="gap-1.5 sm:gap-2">
 														{[...Array(6)].map((_, index) => (
 															<InputOTPSlot
 																key={index}
 																index={index}
-																className="w-12 h-12 text-lg border-2 border-slate-600 bg-slate-800/50 hover:border-slate-500 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20"
+																className="w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg border-2 border-slate-600 bg-slate-800/50 hover:border-slate-500 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20"
 															/>
 														))}
 													</InputOTPGroup>

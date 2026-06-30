@@ -2,7 +2,7 @@ import { LocationsTable } from "@/components/locations/locations-table";
 
 export default function LocationsPage() {
 	return (
-		<div className="flex flex-col h-full p-6 space-y-6">
+		<div className="flex flex-col h-full p-4 sm:p-6 space-y-6">
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-bold">Service Areas</h1>

@@ -67,7 +67,7 @@ export default async function AnalyticsPage({
 
 	return (
 		<PermissionGate permissions={[Permission.ViewAnalytics]}>
-			<div className="flex flex-col h-full p-6 space-y-6">
+			<div className="flex flex-col h-full p-4 sm:p-6 space-y-6">
 				{/* Header with client-side date filter */}
 				<AnalyticsHeader initialDateRange={dateRange} initialTab={activeTab} />
 

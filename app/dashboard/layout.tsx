@@ -1,7 +1,7 @@
 import type React from "react";
 import { redirect } from "next/navigation";
 
-import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardLayout({
@@ -20,10 +20,5 @@ export default async function DashboardLayout({
 		redirect("/login");
 	}
 
-	return (
-		<div className="flex h-screen bg-background">
-			<DashboardSidebar />
-			<div className="flex-1 overflow-auto">{children}</div>
-		</div>
-	);
+	return <DashboardShell>{children}</DashboardShell>;
 }

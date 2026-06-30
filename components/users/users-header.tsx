@@ -72,9 +72,9 @@ export function UsersHeader() {
 					</div>
 				</form>
 
-				<div className="flex items-center space-x-4">
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-4">
 					<Select value={statusFilter} onValueChange={setStatusFilter}>
-						<SelectTrigger className="w-[180px]">
+						<SelectTrigger className="w-full sm:w-[180px]">
 							<SelectValue placeholder="Status" />
 						</SelectTrigger>
 						<SelectContent>
@@ -87,7 +87,7 @@ export function UsersHeader() {
 
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="outline">Roles</Button>
+							<Button variant="outline" className="w-full sm:w-auto">Roles</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent className="w-56">
 							<DropdownMenuLabel>Filter by role</DropdownMenuLabel>

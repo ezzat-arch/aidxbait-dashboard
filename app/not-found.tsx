@@ -13,7 +13,7 @@ import { FileQuestion } from "lucide-react";
 export default function NotFound() {
 	return (
 		<div className="flex items-center justify-center min-h-screen bg-background">
-			<Card className="w-[400px]">
+			<Card className="w-full max-w-[400px] mx-4">
 				<CardHeader className="text-center">
 					<div className="flex justify-center mb-4">
 						<FileQuestion className="h-12 w-12 text-muted-foreground" />
@@ -29,7 +29,7 @@ export default function NotFound() {
 						incorrectly.
 					</p>
 				</CardContent>
-				<CardFooter className="flex justify-center space-x-2">
+				<CardFooter className="flex flex-wrap justify-center gap-2">
 					<Button asChild variant="default">
 						<Link href="/">Go Home</Link>
 					</Button>

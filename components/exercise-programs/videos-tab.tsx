@@ -334,12 +334,12 @@ export function VideosTab() {
 	return (
 		<>
 			{/* Split-screen container */}
-			<div className="flex h-full">
+			<div className="flex flex-col lg:flex-row h-full">
 				{/* Main content area */}
 				<div className={`flex-1 min-w-0 transition-all duration-300 ${previewVideo ? "lg:pr-0" : ""}`}>
 					<Card className="h-full">
 						<CardHeader>
-							<div className="flex items-center justify-between">
+							<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 								<div>
 									<CardTitle className="flex items-center gap-2">
 										<FileVideo className="h-5 w-5" />

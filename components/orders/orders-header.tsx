@@ -64,9 +64,9 @@ export function OrdersHeader({
 	return (
 		<div className="space-y-4">
 			{/* Header */}
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-3">
-					<h1 className="text-3xl font-bold tracking-tight">
+					<h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
 						Order Management
 					</h1>
 					{totalCount !== undefined && (
@@ -75,7 +75,7 @@ export function OrdersHeader({
 						</Badge>
 					)}
 				</div>
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-2 flex-wrap">
 					{hasActiveFilters && (
 						<Button variant="outline" size="sm" onClick={clearFilters}>
 							<X className="h-4 w-4 mr-2" />

@@ -12,6 +12,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/components/ui/use-mobile";
 
 interface DateRangeFilterProps {
 	dateRange: DateRangeType;
@@ -24,6 +25,7 @@ export const DateRangeFilter = ({
 }: DateRangeFilterProps) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [tempStart, setTempStart] = useState<Date | null>(null);
+	const isMobile = useIsMobile();
 
 	const presets = [
 		{
@@ -107,7 +109,7 @@ export const DateRangeFilter = ({
 					<Button
 						variant="outline"
 						className={cn(
-							"justify-start text-left font-normal min-w-[280px]",
+							"justify-start text-left font-normal w-full sm:min-w-[280px]",
 							!dateRange.from && !dateRange.to && "text-muted-foreground"
 						)}
 					>
@@ -115,8 +117,8 @@ export const DateRangeFilter = ({
 						{formatDateRange()}
 					</Button>
 				</PopoverTrigger>
-				<PopoverContent className="w-auto p-0" align="start">
-					<div className="flex">
+				<PopoverContent className="w-auto p-0 max-w-[calc(100vw-2rem)] overflow-x-auto" align="start">
+					<div className="flex flex-col sm:flex-row">
 						<div className="border-r p-3 space-y-2">
 							<div className="text-sm font-medium mb-2">Quick Select</div>
 							{presets.map((preset) => (
@@ -154,7 +156,7 @@ export const DateRangeFilter = ({
 									mode="single"
 									selected={tempStart || undefined}
 									onSelect={handleDateSelect}
-									numberOfMonths={2}
+									numberOfMonths={isMobile ? 1 : 2}
 									disabled={(date) => date > new Date()}
 									modifiers={{
 										...(dateRange.from && { rangeStart: dateRange.from }),

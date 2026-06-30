@@ -176,7 +176,7 @@ export function JointsTab() {
 
 	return (
 		<Card>
-			<CardHeader className="flex flex-row items-center justify-between">
+			<CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div>
 					<CardTitle>Body Joints</CardTitle>
 					<CardDescription>
@@ -192,6 +192,7 @@ export function JointsTab() {
 			</CardHeader>
 
 			<CardContent>
+				<div className="overflow-x-auto">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -316,6 +317,7 @@ export function JointsTab() {
 						)}
 					</TableBody>
 				</Table>
+				</div>
 			</CardContent>
 
 			{/* Create Joint Dialog */}

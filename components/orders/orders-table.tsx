@@ -258,7 +258,7 @@ export function OrdersTable({ filters, onOrderUpdate }: OrdersTableProps) {
 	return (
 		<>
 			<div className="flex flex-col space-y-4 bg-card rounded-lg border">
-				<div className="rounded-md">
+				<div className="rounded-md overflow-x-auto">
 					<Table>
 						<TableHeader>
 							<TableRow>

@@ -163,6 +163,7 @@ export function UsersTable() {
 		<>
 			<div className="flex flex-col space-y-4 bg-card rounded-lg border border-border">
 				<div className="rounded-md">
+					<div className="overflow-x-auto">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -359,6 +360,7 @@ export function UsersTable() {
 							)}
 						</TableBody>
 					</Table>
+					</div>
 				</div>
 
 				{!loading && !error && users.length > 0 && (

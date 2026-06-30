@@ -44,10 +44,7 @@ import { TherapistDetailsSheet } from "@/components/therapists/therapist-details
 import { DeclineTherapistDialog } from "@/components/therapists/decline-therapist-dialog";
 import { ApproveTherapistDialog } from "@/components/therapists/approve-therapist-dialog";
 import type { TherapistRow } from "@/types/therapist-types";
-import {
-	STATUS_LABELS,
-	STATUS_BADGE_CLASS,
-} from "@/types/therapist-types";
+import { STATUS_LABELS, STATUS_BADGE_CLASS } from "@/types/therapist-types";
 
 const STATUS_OPTIONS = [
 	{ value: "all", label: "All statuses" },
@@ -260,7 +257,7 @@ export function TherapistsTable() {
 										</TableCell>
 										<TableCell>{t.specialty || "—"}</TableCell>
 										<TableCell>
-											<span className="text-sm text-muted-foreground">
+											<span className="block max-w-[140px] truncate text-sm text-muted-foreground sm:max-w-none">
 												{t.areas.length > 0 ? t.areas.join(", ") : "—"}
 											</span>
 										</TableCell>

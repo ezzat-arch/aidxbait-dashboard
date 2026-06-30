@@ -6,8 +6,8 @@ import { StoreDashboard } from "@/components/store/store-dashboard";
 export default function StorePage() {
 	return (
 		<PermissionGate permissions={[Permission.ViewStore]}>
-			<div className="flex flex-col h-full p-6 space-y-6">
-				<div className="flex items-center justify-between">
+			<div className="flex flex-col h-full p-4 sm:p-6 space-y-6">
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 					<div>
 						<h1 className="text-2xl font-bold">Store Management</h1>
 						<p className="text-muted-foreground">

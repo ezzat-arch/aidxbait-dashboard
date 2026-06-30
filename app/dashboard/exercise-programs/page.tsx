@@ -7,8 +7,8 @@ import { ExerciseProgramsDashboard } from "@/components/exercise-programs/exerci
 export default function ExerciseProgramsPage() {
 	return (
 		<PermissionGate permissions={[Permission.ViewExercisePrograms]}>
-			<div className="flex flex-col h-full p-6 space-y-6">
-				<div className="flex items-center justify-between">
+			<div className="flex flex-col h-full p-4 sm:p-6 space-y-6">
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 					<div>
 						<h1 className="text-2xl font-bold">Exercise Programs</h1>
 						<p className="text-muted-foreground">

@@ -205,7 +205,7 @@ export function ProductsTab() {
 
 	return (
 		<Card>
-			<CardHeader className="flex flex-row items-center justify-between">
+			<CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div>
 					<CardTitle>Products</CardTitle>
 					<CardDescription>
@@ -222,6 +222,7 @@ export function ProductsTab() {
 			</CardHeader>
 
 			<CardContent>
+				<div className="overflow-x-auto">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -458,6 +459,7 @@ export function ProductsTab() {
 						)}
 					</TableBody>
 				</Table>
+				</div>
 			</CardContent>
 
 			{/* Create Product Modal */}
@@ -516,7 +518,7 @@ export function ProductsTab() {
 								{productDetails.product_images &&
 								Array.isArray(productDetails.product_images) &&
 								productDetails.product_images.length > 0 ? (
-									<div className="grid grid-cols-2 gap-4">
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 										{productDetails.product_images.map(
 											(image: ProductImage, index: number) => (
 												<div
@@ -596,7 +598,7 @@ export function ProductsTab() {
 									Pricing
 								</h3>
 								<div className="space-y-6">
-									<div className="grid grid-cols-2 gap-6">
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 										<div className="grid grid-cols-1 gap-1">
 											<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
 												Price
@@ -657,7 +659,7 @@ export function ProductsTab() {
 									Status & Inventory
 								</h3>
 								<div className="space-y-6">
-									<div className="grid grid-cols-2 gap-6">
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 										<div className="grid grid-cols-1 gap-1">
 											<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
 												Stock
@@ -748,7 +750,7 @@ export function ProductsTab() {
 									Reviews
 								</h3>
 								{(productDetails.review_count || 0) > 0 ? (
-									<div className="grid grid-cols-2 gap-6">
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 										<div className="grid grid-cols-1 gap-1">
 											<label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
 												Average Rating

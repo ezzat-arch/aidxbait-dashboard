@@ -7,7 +7,7 @@ import { SubscriptionDashboard } from "@/components/subscriptions/subscription-d
 export default function ProgramSubscriptionPage() {
 	return (
 		<PermissionGate permissions={[Permission.ViewSubscriptions]}>
-			<div className="flex flex-col h-full p-6 space-y-6">
+			<div className="flex flex-col h-full p-4 sm:p-6 space-y-6">
 				<div className="flex items-center justify-between">
 					<div>
 						<h1 className="text-2xl font-bold">Program Subscriptions</h1>

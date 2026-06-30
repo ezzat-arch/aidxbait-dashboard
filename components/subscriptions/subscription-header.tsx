@@ -79,15 +79,15 @@ export function SubscriptionHeader({
 		<>
 			<div className="flex flex-col space-y-4">
 				{/* Header Row */}
-				<div className="flex items-center justify-between">
-					<div className="flex items-center space-x-4">
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-4 flex-wrap">
 						<div className="relative">
 							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 							<Input
 								placeholder="Search patients, programs..."
 								value={filters.search || ""}
 								onChange={(e) => handleSearchChange(e.target.value)}
-								className="pl-10 w-80"
+								className="pl-10 w-full sm:w-80"
 							/>
 						</div>
 						<Button
@@ -117,7 +117,7 @@ export function SubscriptionHeader({
 					</div>
 
 					<PermissionGate permissions={[Permission.CreateSubscriptions]}>
-						<Button onClick={() => setShowCreateDialog(true)}>
+						<Button onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
 							<Plus className="h-4 w-4 mr-2" />
 							New Subscription
 						</Button>

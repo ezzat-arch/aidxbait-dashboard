@@ -144,7 +144,7 @@ export function ReviewsTab() {
 
 	return (
 		<Card>
-			<CardHeader className="flex flex-row items-center justify-between">
+			<CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div>
 					<CardTitle>Product Reviews</CardTitle>
 					<CardDescription>
@@ -160,6 +160,7 @@ export function ReviewsTab() {
 			</CardHeader>
 
 			<CardContent>
+				<div className="overflow-x-auto">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -281,6 +282,7 @@ export function ReviewsTab() {
 						)}
 					</TableBody>
 				</Table>
+				</div>
 			</CardContent>
 
 			{/* Bulk Review Dialog */}

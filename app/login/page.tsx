@@ -34,7 +34,7 @@ export default async function LoginPage() {
 			</div>
 
 			{/* Glassmorphic card for login form */}
-			<div className="z-10 w-full max-w-md rounded-2xl bg-white/10 backdrop-blur-lg shadow-2xl border border-white/20 px-8 py-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+			<div className="z-10 w-full max-w-md rounded-2xl bg-white/10 backdrop-blur-lg shadow-2xl border border-white/20 px-5 py-8 sm:px-8 sm:py-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
 				<LoginForm />
 			</div>
 		</div>

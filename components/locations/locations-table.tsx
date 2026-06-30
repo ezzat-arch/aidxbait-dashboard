@@ -133,6 +133,7 @@ export function LocationsTable() {
 
 			<div className="flex flex-col space-y-4 bg-card rounded-lg border border-border">
 				<div className="rounded-md">
+					<div className="overflow-x-auto">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -253,6 +254,7 @@ export function LocationsTable() {
 							)}
 						</TableBody>
 					</Table>
+					</div>
 				</div>
 
 				{!loading && !error && locations.length > 0 && (

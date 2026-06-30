@@ -356,7 +356,7 @@ export function VideoFormDialog({
 						{/* Duration Input */}
 						<div className="space-y-2">
 							<Label>Duration *</Label>
-							<div className="flex items-center space-x-2">
+							<div className="flex flex-wrap items-center gap-2">
 								<div className="flex items-center space-x-1">
 									<Input
 										type="number"

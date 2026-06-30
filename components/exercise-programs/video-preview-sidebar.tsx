@@ -27,7 +27,7 @@ export function VideoPreviewSidebar({
 	if (!video) return null;
 
 	return (
-		<div className="w-[420px] flex-shrink-0 border-l bg-background flex flex-col sticky top-0 h-screen max-h-screen animate-in slide-in-from-right-5 duration-300">
+		<div className="w-full lg:w-[420px] lg:flex-shrink-0 border-l bg-background flex flex-col h-auto lg:sticky lg:top-0 lg:h-screen lg:max-h-screen animate-in slide-in-from-right-5 duration-300">
 			{/* Header */}
 			<div className="flex items-center justify-between p-4 border-b">
 				<div className="flex items-center gap-2">

@@ -111,7 +111,7 @@ function PatientDetails({ patient, addresses }: { patient: PatientData; addresse
 	return (
 		<>
 			<SectionHeader title="Patient Information" />
-			<div className="grid grid-cols-2 gap-x-4">
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
 				<DetailRow
 					icon={Calendar}
 					label="Date of Birth"
@@ -147,7 +147,7 @@ function PatientDetails({ patient, addresses }: { patient: PatientData; addresse
 			{patient.has_insurance && (
 				<>
 					<SectionHeader title="Insurance Information" />
-					<div className="grid grid-cols-2 gap-x-4">
+					<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
 						<DetailRow
 							icon={Shield}
 							label="Insurance Provider"
@@ -225,7 +225,7 @@ function ConsultantDetails({ consultant }: { consultant: ConsultantData }) {
 	return (
 		<>
 			<SectionHeader title="Consultant Information" />
-			<div className="grid grid-cols-2 gap-x-4">
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
 				<DetailRow
 					icon={Briefcase}
 					label="Specialization"
@@ -466,7 +466,7 @@ export function UserDetailsSheet({
 
 						{/* Account Metadata */}
 						<SectionHeader title="Account Information" />
-						<div className="grid grid-cols-2 gap-x-4">
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
 							<DetailRow
 								icon={Calendar}
 								label="Created At"

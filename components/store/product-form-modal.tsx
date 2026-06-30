@@ -228,7 +228,7 @@ const StepIndicator = ({
 	totalSteps: number;
 }) => {
 	return (
-		<div className="flex items-center justify-center space-x-4 mb-8">
+		<div className="flex items-center justify-center space-x-2 sm:space-x-4 mb-8">
 			{Array.from({ length: totalSteps }, (_, index) => (
 				<div key={index} className="flex items-center">
 					<div
@@ -250,7 +250,7 @@ const StepIndicator = ({
 					{index < totalSteps - 1 && (
 						<div
 							className={cn(
-								"w-12 h-0.5 mx-2 transition-all duration-300",
+								"w-6 sm:w-12 h-0.5 mx-1 sm:mx-2 transition-all duration-300",
 								currentStep > index + 1 ? "bg-primary" : "bg-muted"
 							)}
 						/>
@@ -1026,7 +1026,7 @@ const ImagesStep = ({ form }: { form: any }) => {
 			<div className="space-y-4">
 				<h3 className="text-lg font-semibold">Product Images</h3>
 				<div className="space-y-4">
-					<div className="flex items-center gap-4">
+					<div className="flex flex-col sm:flex-row sm:items-center gap-4">
 						<Button
 							type="button"
 							variant="outline"
@@ -1060,7 +1060,7 @@ const ImagesStep = ({ form }: { form: any }) => {
 									{uploadProgress.current}/{uploadProgress.total}
 								</span>
 								{uploadProgress.currentFileName && (
-									<span className="text-xs">
+									<span className="text-xs min-w-0 truncate">
 										({uploadProgress.currentFileName})
 									</span>
 								)}
@@ -1075,7 +1075,7 @@ const ImagesStep = ({ form }: { form: any }) => {
 						</div>
 					)}
 
-					<div className="grid grid-cols-3 gap-4">
+					<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
 						{form.watch("images").map((image: any, index: number) => (
 							<div key={index} className="relative group">
 								<img
