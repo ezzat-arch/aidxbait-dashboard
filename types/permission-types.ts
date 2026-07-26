@@ -60,6 +60,12 @@ export enum Permission {
 	CreateSpecialties = "specialties:create",
 	UpdateSpecialties = "specialties:update",
 	DeleteSpecialties = "specialties:delete",
+
+	// Blog management permissions
+	ViewBlogs = "blogs:view",
+	CreateBlogs = "blogs:create",
+	UpdateBlogs = "blogs:update",
+	DeleteBlogs = "blogs:delete",
 }
 
 // Define role types

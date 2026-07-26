@@ -14,9 +14,11 @@ import {
 	Dumbbell,
 	CalendarDays,
 	ShoppingCart,
+	PackageSearch,
 	Stethoscope,
 	MapPin,
 	Tag,
+	Newspaper,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -80,9 +82,23 @@ const navItems = [
 		disabled: false,
 	},
 	{
+		title: "Blog",
+		href: "/dashboard/blogs",
+		icon: Newspaper,
+		permission: Permission.ViewBlogs,
+		disabled: false,
+	},
+	{
 		title: "Orders",
 		href: "/dashboard/orders",
 		icon: ShoppingCart,
+		permission: Permission.ViewOrders,
+		disabled: false,
+	},
+	{
+		title: "Shopify Orders",
+		href: "/dashboard/shopify-orders",
+		icon: PackageSearch,
 		permission: Permission.ViewOrders,
 		disabled: false,
 	},

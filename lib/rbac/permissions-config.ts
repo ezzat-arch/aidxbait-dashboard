@@ -33,6 +33,14 @@ export const ROLE_PERMISSIONS: RolePermissions = {
 		Permission.CreateSpecialties,
 		Permission.UpdateSpecialties,
 		Permission.DeleteSpecialties,
+		// Blog - full CRUD
+		Permission.ViewBlogs,
+		Permission.CreateBlogs,
+		Permission.UpdateBlogs,
+		Permission.DeleteBlogs,
+		// Orders - view only (status changes / cancel / refunds stay superuser-only)
+		Permission.ViewOrders,
+		Permission.ViewOrderDetails,
 	],
 	[Role.Therapist]: [],
 	[Role.Consultant]: [],
@@ -53,9 +61,11 @@ export const ROUTE_PERMISSIONS: Record<string, Permission[]> = {
 	"/dashboard/exercise-programs": [Permission.ViewExercisePrograms],
 	"/dashboard/program-subscription": [Permission.ViewSubscriptions],
 	"/dashboard/orders": [Permission.ViewOrders],
+	"/dashboard/shopify-orders": [Permission.ViewOrders],
 	"/dashboard/therapists": [Permission.ViewTherapists],
 	"/dashboard/locations": [Permission.ViewLocations],
 	"/dashboard/specialties": [Permission.ViewSpecialties],
+	"/dashboard/blogs": [Permission.ViewBlogs],
 };
 
 // Define API route permissions
@@ -163,6 +173,10 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"PUT /api/protected/orders/[id]": [Permission.UpdateOrderStatus],
 	"PUT /api/protected/orders/[id]/cancel": [Permission.CancelOrder],
 
+	// Shopify orders (read-only, Admin API) — reuses the orders permissions
+	"GET /api/protected/shopify-orders": [Permission.ViewOrders],
+	"GET /api/protected/shopify-orders/[id]": [Permission.ViewOrderDetails],
+
 	// Therapist management API permissions
 	"GET /api/protected/therapists": [Permission.ViewTherapists],
 	"GET /api/protected/therapists/[id]": [Permission.ViewTherapists],
@@ -180,4 +194,21 @@ export const API_PERMISSIONS: Record<string, Permission[]> = {
 	"POST /api/protected/specialties": [Permission.CreateSpecialties],
 	"PUT /api/protected/specialties/[id]": [Permission.UpdateSpecialties],
 	"DELETE /api/protected/specialties/[id]": [Permission.DeleteSpecialties],
+
+	// Blog API permissions
+	"GET /api/protected/blogs": [Permission.ViewBlogs],
+	"POST /api/protected/blogs": [Permission.CreateBlogs],
+	"PUT /api/protected/blogs": [Permission.UpdateBlogs],
+	"DELETE /api/protected/blogs": [Permission.DeleteBlogs],
+	"GET /api/protected/blogs/[id]": [Permission.ViewBlogs],
+	"PUT /api/protected/blogs/[id]": [Permission.UpdateBlogs],
+	"DELETE /api/protected/blogs/[id]": [Permission.DeleteBlogs],
+	"POST /api/protected/blogs/upload-images": [
+		Permission.CreateBlogs,
+		Permission.UpdateBlogs,
+	],
+	"GET /api/protected/blogs/shopify-products": [
+		Permission.CreateBlogs,
+		Permission.UpdateBlogs,
+	],
 };
