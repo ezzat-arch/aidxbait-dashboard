@@ -1,22 +1,10 @@
 /**
- * SECURE 2FA LOGIN IMPLEMENTATION
- *
- * This component implements a secure two-factor authentication flow that adheres to
- * top security standards:
- *
- * SECURITY FEATURES:
- * 1. No session persistence until OTP verification
- * 2. Rate limit prevention through optimized flow
- * 3. Double authorization verification (email/password + OTP)
- * 4. Secure OTP-only session creation
- * 5. Role-based access control after authentication
+ * DIRECT LOGIN IMPLEMENTATION
  *
  * FLOW:
- * Step 1: Send OTP to email (includes credential verification)
- * Step 2: Verify OTP and create authenticated session
- * Step 3: Verify password with authenticated session
- * Step 4: Check user authorization (admin/superuser only)
- * Step 5: Redirect to dashboard
+ * Step 1: Sign in with email/password
+ * Step 2: Check user authorization (admin/superuser only)
+ * Step 3: Redirect to dashboard
  */
 "use client";
 
@@ -25,7 +13,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AuthApiError } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,11 +24,6 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-	InputOTP,
-	InputOTPGroup,
-	InputOTPSlot,
-} from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { useUserContext } from "@/providers/user-provider";
@@ -54,12 +36,7 @@ const loginSchema = z.object({
 		.min(6, { message: "Password must be at least 6 characters" }),
 });
 
-const otpSchema = z.object({
-	otp: z.string().length(6, { message: "OTP must be 6 characters" }),
-});
-
 type LoginFormData = z.infer<typeof loginSchema>;
-type OtpFormData = z.infer<typeof otpSchema>;
 
 // Error message utilities
 const getAuthErrorMessage = (
@@ -71,7 +48,6 @@ const getAuthErrorMessage = (
 
 	// Rate limiting errors
 	if (
-		errorMessage.includes("over_email_send_rate_limit") ||
 		errorMessage.includes("rate_limit") ||
 		errorMessage.includes("too_many_requests")
 	) {
@@ -101,26 +77,6 @@ const getAuthErrorMessage = (
 		return {
 			title: "Invalid Credentials",
 			message: "The email or password you entered is incorrect.",
-		};
-	}
-
-	// OTP specific errors
-	if (
-		errorMessage.includes("otp_expired") ||
-		errorMessage.includes("expired") ||
-		errorMessage.includes("token has expired")
-	) {
-		return {
-			title: "Code Expired",
-			message: "Your verification code has expired. Please request a new one.",
-		};
-	}
-
-	if (errorMessage.includes("invalid_otp")) {
-		return {
-			title: "Invalid Code",
-			message:
-				"The verification code you entered is incorrect. Please try again.",
 		};
 	}
 
@@ -155,9 +111,6 @@ const getAuthErrorMessage = (
 
 export function LoginForm() {
 	const [isLoading, setIsLoading] = useState(false);
-	const [isResending, setIsResending] = useState(false);
-	const [showOtpForm, setShowOtpForm] = useState(false);
-	const [credentials, setCredentials] = useState({ email: "", password: "" });
 
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -206,63 +159,25 @@ export function LoginForm() {
 		defaultValues: { email: "", password: "" },
 	});
 
-	const otpForm = useForm<OtpFormData>({
-		resolver: zodResolver(otpSchema),
-		defaultValues: { otp: "" },
-	});
-
-	// Step 1: Send OTP email (includes credential verification)
+	// Direct login: password sign-in, authorization check, redirect
 	const handleLoginSubmit = async (values: LoginFormData) => {
 		setIsLoading(true);
 
 		try {
-			const { error } = await supabase.auth.signInWithOtp({
-				email: values.email,
-				options: { shouldCreateUser: false },
-			});
+			// Step 1: Sign in with email/password
+			const { data: signInData, error: signInError } =
+				await supabase.auth.signInWithPassword({
+					email: values.email,
+					password: values.password,
+				});
 
-			if (error) {
-				const { title, message } = getAuthErrorMessage(error);
+			if (signInError) {
+				const { title, message } = getAuthErrorMessage(signInError);
 				toast({ variant: "destructive", title, description: message });
 				return;
 			}
 
-			// Store credentials for later verification
-			setCredentials(values);
-			setShowOtpForm(true);
-
-			toast({
-				title: "OTP Sent",
-				description:
-					"Please check your email for the verification code. You'll need to verify both your password and OTP to login.",
-			});
-		} catch (error) {
-			const { title, message } = getAuthErrorMessage(error);
-			toast({ variant: "destructive", title, description: message });
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	// Step 2-5: Complete authentication flow
-	const handleOtpSubmit = async (values: OtpFormData) => {
-		setIsLoading(true);
-
-		try {
-			// Step 2: Verify OTP and create session
-			const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
-				email: credentials.email,
-				token: values.otp,
-				type: "email",
-			});
-
-			if (otpError) {
-				const { title, message } = getAuthErrorMessage(otpError);
-				toast({ variant: "destructive", title, description: message });
-				return;
-			}
-
-			if (!otpData?.session || !otpData?.user) {
+			if (!signInData?.session || !signInData?.user) {
 				toast({
 					variant: "destructive",
 					title: "Session Error",
@@ -272,28 +187,11 @@ export function LoginForm() {
 				return;
 			}
 
-			// Step 3: Verify password with authenticated session
-			const { error: passwordError } = await supabase.auth.signInWithPassword({
-				email: credentials.email,
-				password: credentials.password,
-			});
-
-			if (passwordError) {
-				// Sign out and reject if password verification fails
-				await supabase.auth.signOut();
-				toast({
-					variant: "destructive",
-					title: "Password Verification Failed",
-					description: "The password you entered is incorrect.",
-				});
-				return;
-			}
-
-			// Step 4: Verify user authorization
+			// Step 2: Verify user authorization
 			const { data: userData, error: userError } = await supabase
 				.from("users")
 				.select("user_type")
-				.eq("supabase_id", otpData.user.id)
+				.eq("supabase_id", signInData.user.id)
 				.single();
 
 			if (
@@ -319,12 +217,12 @@ export function LoginForm() {
 				return;
 			}
 
-			// Step 5: Success - refresh user context and redirect
+			// Step 3: Success - refresh user context and redirect
 			await refreshUser();
 
 			toast({
 				title: "Login Successful",
-				description: "You have been securely logged in with 2FA verification",
+				description: "You have been logged in successfully",
 			});
 
 			router.push("/dashboard/users");
@@ -339,146 +237,44 @@ export function LoginForm() {
 		}
 	};
 
-	const handleResendOtp = async () => {
-		setIsResending(true);
-
-		try {
-			const { error } = await supabase.auth.signInWithOtp({
-				email: credentials.email,
-				options: { shouldCreateUser: false },
-			});
-
-			if (error) {
-				const { title, message } = getAuthErrorMessage(error);
-				toast({ variant: "destructive", title, description: message });
-				return;
-			}
-
-			toast({
-				title: "Code Resent",
-				description: "A new verification code has been sent to your email.",
-			});
-		} catch (error) {
-			const { title, message } = getAuthErrorMessage(error);
-			toast({ variant: "destructive", title, description: message });
-		} finally {
-			setIsResending(false);
-		}
-	};
-
-	const handleBackToLogin = () => {
-		setShowOtpForm(false);
-		setCredentials({ email: "", password: "" });
-		otpForm.reset();
-	};
-
 	return (
 		<div className="space-y-6">
-			{!showOtpForm ? (
-				<Form {...loginForm}>
-					<form
-						onSubmit={loginForm.handleSubmit(handleLoginSubmit)}
-						className="space-y-4"
-					>
-						<FormField
-							control={loginForm.control}
-							name="email"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Email</FormLabel>
-									<FormControl>
-										<Input placeholder="email@example.com" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={loginForm.control}
-							name="password"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Password</FormLabel>
-									<FormControl>
-										<Input type="password" placeholder="••••••••" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? "Sending verification code..." : "Continue to 2FA"}
-						</Button>
-					</form>
-				</Form>
-			) : (
-				<div className="space-y-6">
-					<div className="text-center space-y-2">
-						<h3 className="text-xl font-semibold">Two-Factor Authentication</h3>
-						<p className="text-sm text-muted-foreground max-w-sm mx-auto">
-							Enter the 6-digit code sent to your email to complete login
-						</p>
-					</div>
-					<Form {...otpForm}>
-						<form
-							onSubmit={otpForm.handleSubmit(handleOtpSubmit)}
-							className="space-y-6"
-						>
-							<FormField
-								control={otpForm.control}
-								name="otp"
-								render={({ field }) => (
-									<FormItem className="space-y-4">
-										<FormControl>
-											<div className="flex justify-center">
-												<InputOTP maxLength={6} {...field}>
-													<InputOTPGroup className="gap-1.5 sm:gap-2">
-														{[...Array(6)].map((_, index) => (
-															<InputOTPSlot
-																key={index}
-																index={index}
-																className="w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg border-2 border-slate-600 bg-slate-800/50 hover:border-slate-500 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20"
-															/>
-														))}
-													</InputOTPGroup>
-												</InputOTP>
-											</div>
-										</FormControl>
-										<FormMessage className="text-center" />
-									</FormItem>
-								)}
-							/>
-							<div className="flex flex-col space-y-3 pt-2">
-								<Button
-									type="submit"
-									className="w-full h-11"
-									disabled={isLoading}
-								>
-									{isLoading ? "Verifying credentials..." : "Verify & Login"}
-								</Button>
-								<Button
-									type="button"
-									variant="secondary"
-									className="w-full h-11"
-									onClick={handleResendOtp}
-									disabled={isLoading || isResending}
-								>
-									{isResending ? "Sending..." : "Resend Code"}
-								</Button>
-								<Button
-									type="button"
-									variant="outline"
-									className="w-full h-11"
-									onClick={handleBackToLogin}
-									disabled={isLoading}
-								>
-									Back to Login
-								</Button>
-							</div>
-						</form>
-					</Form>
-				</div>
-			)}
+			<Form {...loginForm}>
+				<form
+					onSubmit={loginForm.handleSubmit(handleLoginSubmit)}
+					className="space-y-4"
+				>
+					<FormField
+						control={loginForm.control}
+						name="email"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Email</FormLabel>
+								<FormControl>
+									<Input placeholder="email@example.com" {...field} />
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<FormField
+						control={loginForm.control}
+						name="password"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Password</FormLabel>
+								<FormControl>
+									<Input type="password" placeholder="••••••••" {...field} />
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+					<Button type="submit" className="w-full" disabled={isLoading}>
+						{isLoading ? "Signing in..." : "Sign In"}
+					</Button>
+				</form>
+			</Form>
 		</div>
 	);
 }
