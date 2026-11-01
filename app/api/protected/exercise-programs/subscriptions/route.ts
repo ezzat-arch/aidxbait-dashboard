@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 
@@ -7,7 +7,7 @@ const handleGetSubscriptions = withPermission(
 	[Permission.ViewSubscriptions],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const { searchParams } = new URL(req.url);
 
 			// Parse query parameters
@@ -98,7 +98,7 @@ const handleCreateSubscription = withPermission(
 	[Permission.CreateSubscriptions],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const body = await req.json();
 
 			// Basic validation

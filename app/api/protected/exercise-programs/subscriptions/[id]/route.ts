@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 
@@ -7,7 +7,7 @@ const handleGetSubscription = withPermission(
 	[Permission.ViewSubscriptions],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const { id } = await context.params;
 
 			if (!id) {
@@ -60,7 +60,7 @@ const handleUpdateSubscription = withPermission(
 	[Permission.UpdateSubscriptions],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const { id } = await context.params;
 			const body = await req.json();
 
@@ -137,7 +137,7 @@ const handleCancelSubscription = withPermission(
 	[Permission.CancelSubscriptions],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const { id } = await context.params;
 			const body = await req.json();
 

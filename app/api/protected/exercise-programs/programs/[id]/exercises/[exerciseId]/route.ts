@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 import type { UpdateProgramExerciseData } from "@/types/exercise-program-types";
@@ -8,7 +8,7 @@ const handleUpdateExercise = withPermission(
 	[Permission.UpdateExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const programId = context.params.id;
 			const exerciseId = context.params.exerciseId;
 			const body: UpdateProgramExerciseData = await req.json();
@@ -246,7 +246,7 @@ const handleDeleteExercise = withPermission(
 	[Permission.UpdateExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const programId = context.params.id;
 			const exerciseId = context.params.exerciseId;
 
