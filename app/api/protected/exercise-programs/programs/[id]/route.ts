@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
@@ -24,7 +24,7 @@ const handleGetProgram = withPermission(
 	[Permission.ViewExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const id = context.params.id;
 
 			if (!id || isNaN(Number(id))) {
@@ -108,7 +108,7 @@ const handleUpdateProgram = withPermission(
 	[Permission.UpdateExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const id = context.params.id;
 			const body: Omit<UpdateProgramData, "id"> = await req.json();
 
@@ -271,7 +271,7 @@ const handleDeleteProgram = withPermission(
 	[Permission.DeleteExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const id = context.params.id;
 
 			if (!id || isNaN(Number(id))) {

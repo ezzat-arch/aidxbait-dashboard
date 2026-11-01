@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 import type { CreateVideoData } from "@/types/exercise-program-types";
@@ -8,7 +8,7 @@ const handleGetVideos = withPermission(
 	[Permission.ViewExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 
 			// Fetch all videos (excluding soft deleted)
 			// Using .range(0, 9999) to bypass Supabase's default row limit
@@ -45,7 +45,7 @@ const handleCreateVideo = withPermission(
 	[Permission.ManageVideos],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const body: CreateVideoData = await req.json();
 
 			// Basic validation

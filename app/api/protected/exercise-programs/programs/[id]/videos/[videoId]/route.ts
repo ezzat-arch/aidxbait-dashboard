@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 
@@ -7,7 +7,7 @@ const handleRemoveVideoFromProgram = withPermission(
 	[Permission.UpdateExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const programId = context.params.id;
 			const videoId = context.params.videoId;
 

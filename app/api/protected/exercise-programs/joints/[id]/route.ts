@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 
@@ -17,7 +17,7 @@ const handleGetProgramJoint = withPermission(
 				);
 			}
 
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 
 			// Fetch program joint name
 			const { data: joint, error } = await supabase
@@ -59,7 +59,7 @@ const handleUpdateProgramJoint = withPermission(
 				);
 			}
 
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const body = await req.json();
 
 			// Validate required fields
@@ -133,7 +133,7 @@ const handleDeleteProgramJoint = withPermission(
 				);
 			}
 
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 
 			// Check if joint is used by programs
 			const { data: programs, error: programsError } = await supabase

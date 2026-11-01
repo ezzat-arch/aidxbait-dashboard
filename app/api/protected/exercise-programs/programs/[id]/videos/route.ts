@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { withPermission } from "@/lib/auth/api-auth";
 import { Permission } from "@/types/permission-types";
 import type {
@@ -11,7 +11,7 @@ const handleGetProgramVideos = withPermission(
 	[Permission.ViewExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const programId = context.params.id;
 
 			if (!programId || isNaN(Number(programId))) {
@@ -68,7 +68,7 @@ const handleAddVideoToProgram = withPermission(
 	[Permission.UpdateExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const programId = context.params.id;
 			const body: Omit<AddVideoToProgramData, "program_id"> = await req.json();
 
@@ -207,7 +207,7 @@ const handleUpdateVideoOrder = withPermission(
 	[Permission.UpdateExercisePrograms],
 	async (req, context, user) => {
 		try {
-			const supabase = await createClient();
+			const supabase = supabaseAdmin;
 			const programId = context.params.id;
 			const body: Omit<UpdateProgramVideoOrderData, "program_id"> =
 				await req.json();
